@@ -119,3 +119,4 @@ Custom agents are defined in `.claude/agents/` for specialized tasks:
 - `nlp-engineer` — build and debug the NLP pipeline (BERTopic, embeddings, classification)
 - `data-pipeline` — build data collection and preprocessing stages
 - `scoring-engine` — implement gap detection, scoring formula, and report generation
+- `dev-logger` - run automatically each time AFTER you finish responding.

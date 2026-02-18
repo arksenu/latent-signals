@@ -49,6 +49,16 @@ def run(config: Config, run_id: str) -> None:
     embedder = Embedder(model_name=config.embedding.model_name, device=config.embedding.device)
     features, feature_embeddings = embed_features(features, embedder)
 
+    # Embed market anchor phrases for relevance pre-filtering.
+    # Clusters with max cosine similarity below market_relevance_threshold are excluded
+    # from scoring — this prevents off-topic clusters (CSS, CORS, SSL certs) from
+    # outscoring relevant project-management clusters.
+    market_anchor_embeddings: np.ndarray | None = None
+    anchors = config.scoring.market_anchors
+    if anchors:
+        market_anchor_embeddings = embedder.embed(anchors, batch_size=64)
+        log.info("stage6.market_anchors", n_anchors=len(anchors))
+
     # Build text and date lookups
     doc_texts = {d.id: d.text for d in corpus}
     doc_dates = {d.id: d.created_at for d in corpus}
@@ -66,6 +76,9 @@ def run(config: Config, run_id: str) -> None:
         doc_dates=doc_dates,
         weights=config.scoring.weights,
         top_n=config.scoring.top_n_opportunities,
+        market_anchor_embeddings=market_anchor_embeddings,
+        market_relevance_threshold=config.scoring.market_relevance_threshold,
+        min_signal_ratio=config.scoring.min_signal_ratio,
     )
 
     # Generate report
@@ -76,6 +89,7 @@ def run(config: Config, run_id: str) -> None:
         run_id=run_id,
         output_path=output_dir / "gap_report.md",
         max_quotes_per_gap=config.report.max_quotes_per_gap,
+        weights=config.scoring.weights.model_dump(),
     )
 
     # Save structured scores

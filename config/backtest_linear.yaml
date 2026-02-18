@@ -16,15 +16,12 @@ collection:
   arctic_shift:
     enabled: true
     subreddits:
+      - "jira"
       - "projectmanagement"
       - "agile"
-      - "devops"
-      - "programming"
-      - "webdev"
-      - "softwareengineering"
-    max_items: 24000
+    max_items: 12000
   hackernews:
-    enabled: true
+    enabled: false
     queries:
       - "project management"
       - "jira alternative"
@@ -79,14 +76,23 @@ classification:
 scoring:
   weights:
     unaddressedness: 0.30
-    frequency: 0.25
-    pain_intensity: 0.15
+    frequency: 0.15
+    pain_intensity: 0.25
     competitive_whitespace: 0.15
     market_size: 0.10
     trend_direction: 0.05
   similarity_threshold: 0.5
   top_n_opportunities: 10
   competitor_features_file: "config/competitor_features/jira_2019.yaml"
+  market_relevance_threshold: 0.35
+  min_signal_ratio: 0.25
+  market_anchors:
+    - "jira is slow and takes forever to load pages"
+    - "issue tracker software is too complicated to configure"
+    - "project management tool is bloated and hard to use"
+    - "bug tracker workflow is confusing and frustrating"
+    - "why does this project management app crash and lag so much"
+    - "switching from jira to a simpler tool for tracking tasks"
 
 report:
   format: "markdown"

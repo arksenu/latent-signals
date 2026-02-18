@@ -34,6 +34,13 @@ from latent_signals.utils.logging import get_logger
 log = get_logger("scoring")
 
 
+def _market_relevance(
+    centroid: np.ndarray, market_anchor_embeddings: np.ndarray
+) -> float:
+    """Max cosine similarity between cluster centroid and market anchor phrases."""
+    return compute_max_similarity(centroid, market_anchor_embeddings)
+
+
 def score_gaps(
     topic_infos: list[TopicInfo],
     assignments: list[TopicAssignment],
@@ -46,6 +53,9 @@ def score_gaps(
     doc_dates: dict[str, datetime],
     weights: ScoringWeights,
     top_n: int = 10,
+    market_anchor_embeddings: np.ndarray | None = None,
+    market_relevance_threshold: float = 0.0,
+    min_signal_ratio: float = 0.0,
 ) -> list[GapOpportunity]:
     """Score all topic clusters and return ranked gap opportunities."""
 
@@ -88,6 +98,40 @@ def score_gaps(
         dids = topic_doc_ids.get(tid, [])
         if not dids:
             continue
+
+        # Market relevance gate: skip clusters that don't resemble the target market.
+        # This prevents large off-topic clusters (CSS, CORS, SSL certs, Terraform)
+        # from outscoring relevant project-management clusters on frequency alone.
+        if market_anchor_embeddings is not None and market_relevance_threshold > 0:
+            relevance = _market_relevance(centroid, market_anchor_embeddings)
+            if relevance < market_relevance_threshold:
+                log.debug(
+                    "scoring.skipped_irrelevant",
+                    topic_id=tid,
+                    label=topic_info.label,
+                    relevance=round(relevance, 3),
+                    threshold=market_relevance_threshold,
+                )
+                continue
+
+        # Signal ratio gate: skip clusters where too few docs express pain or need.
+        # A "gap" requires people complaining or requesting features, not just asking
+        # career questions or sharing book recommendations.
+        if min_signal_ratio > 0:
+            signal_categories = {"pain_point", "feature_request", "bug_report"}
+            cluster_classified = [classified_map[d] for d in dids if d in classified_map]
+            if cluster_classified:
+                n_signal = sum(1 for c in cluster_classified if c.category in signal_categories)
+                ratio = n_signal / len(cluster_classified)
+                if ratio < min_signal_ratio:
+                    log.debug(
+                        "scoring.skipped_low_signal",
+                        topic_id=tid,
+                        label=topic_info.label,
+                        signal_ratio=round(ratio, 3),
+                        threshold=min_signal_ratio,
+                    )
+                    continue
 
         # Component 1: Unaddressedness
         max_sim = compute_max_similarity(centroid, feature_embeddings)

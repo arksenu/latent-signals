@@ -125,6 +125,15 @@ class ScoringConfig(BaseModel):
     similarity_threshold: float = 0.5
     top_n_opportunities: int = 10
     competitor_features_file: str = ""
+    # Clusters with lower max-similarity to market anchors are excluded from scoring.
+    # Prevents off-topic clusters (CSS, CORS, SSL) from outscoring relevant ones.
+    market_relevance_threshold: float = 0.20
+    # Market anchor phrases — embedded at scoring time, used for relevance gating.
+    # Each phrase independently defines the target problem space.
+    market_anchors: list[str] = Field(default_factory=list)
+    # Minimum fraction of docs in a cluster classified as pain_point, feature_request,
+    # or bug_report. Clusters below this are not gaps — they're questions, praise, or noise.
+    min_signal_ratio: float = 0.15
 
 
 class ReportConfig(BaseModel):

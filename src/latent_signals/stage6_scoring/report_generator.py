@@ -17,6 +17,7 @@ def generate_report(
     run_id: str,
     output_path: Path,
     max_quotes_per_gap: int = 20,
+    weights: dict[str, float] | None = None,
 ) -> str:
     """Generate a Markdown gap report."""
     lines: list[str] = []
@@ -60,7 +61,7 @@ def generate_report(
         lines.append("")
         lines.append("| Component | Value | Weight | Contribution |")
         lines.append("|-----------|-------|--------|--------------|")
-        weight_map = {
+        weight_map = weights or {
             "unaddressedness": 0.30,
             "frequency": 0.25,
             "pain_intensity": 0.15,
