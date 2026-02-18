@@ -1,0 +1,100 @@
+pipeline:
+  market_category: "project management"
+  run_id: null
+  output_dir: "data"
+  random_seed: 42
+
+collection:
+  date_range:
+    start: "2024-01-01"
+    end: "2024-12-31"
+  exa:
+    enabled: true
+    max_results_per_query: 100
+    domains:
+      - "reddit.com"
+      - "news.ycombinator.com"
+    queries:
+      - "people frustrated with {market_category} tools"
+      - "looking for alternative to {market_category}"
+      - "{market_category} software complaints"
+  serper:
+    enabled: true
+    max_results_per_query: 100
+    site_filters:
+      - "reddit.com"
+    queries:
+      - "{market_category} frustrating site:reddit.com"
+      - "hate {market_category} tool site:reddit.com"
+  apify:
+    enabled: true
+    subreddits: []
+    max_items: 10000
+  arctic_shift:
+    enabled: false
+    subreddits: []
+    max_items: 20000
+  hackernews:
+    enabled: true
+    queries:
+      - "{market_category} alternative"
+      - "{market_category} frustration"
+    max_items: 5000
+
+preprocessing:
+  min_length: 50
+  max_length: 10000
+  language: "en"
+  minhash_threshold: 0.8
+  minhash_num_perm: 128
+
+embedding:
+  model_name: "all-MiniLM-L6-v2"
+  batch_size: 256
+  device: "cpu"
+
+clustering:
+  umap:
+    n_neighbors: 15
+    n_components: 5
+    min_dist: 0.0
+    metric: "cosine"
+  hdbscan:
+    min_cluster_size: 15
+    min_samples: 5
+    metric: "euclidean"
+  nr_topics: "auto"
+  top_n_words: 10
+
+classification:
+  zero_shot:
+    model_name: "facebook/bart-large-mnli"
+    categories:
+      - "pain point"
+      - "feature request"
+      - "praise"
+      - "question"
+      - "bug report"
+    batch_size: 32
+  llm_extraction:
+    enabled: true
+    model: "gpt-4o-mini"
+    samples_per_cluster: 75
+    max_clusters: 50
+    use_batch_api: true
+
+scoring:
+  weights:
+    unaddressedness: 0.30
+    frequency: 0.25
+    pain_intensity: 0.15
+    competitive_whitespace: 0.15
+    market_size: 0.10
+    trend_direction: 0.05
+  similarity_threshold: 0.5
+  top_n_opportunities: 10
+  competitor_features_file: ""
+
+report:
+  format: "markdown"
+  max_quotes_per_gap: 20

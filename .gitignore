@@ -1,0 +1,19 @@
+data/
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+*.npy
+*.npz
+uv.lock
+Building_a_Market_Gap_Finder.md
+project_doc_directory_structure.md
+1. Meeting Summary.md
+product_brief.md
+.claude/
+CLAUDE.md

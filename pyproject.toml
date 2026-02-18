@@ -1,0 +1,60 @@
+[project]
+name = "latent-signals"
+version = "0.1.0"
+description = "B2B competitive intelligence tool that detects underserved market opportunities"
+requires-python = ">=3.11"
+dependencies = [
+    # Data collection
+    "exa-py>=1.0",
+    "apify-client>=1.0",
+    "httpx>=0.27",
+    # Preprocessing
+    "beautifulsoup4>=4.12",
+    "langdetect>=1.0",
+    "datasketch>=1.6",
+    # Embedding
+    "sentence-transformers>=3.0",
+    "torch>=2.2,<2.3",
+    # Clustering
+    "bertopic>=0.16",
+    "umap-learn>=0.5",
+    "hdbscan>=0.8",
+    # Classification
+    "vaderSentiment>=3.3",
+    "transformers>=4.40",
+    # LLM extraction
+    "openai>=1.30",
+    "dspy>=2.4",
+    # Keyphrase & NER
+    "keybert>=0.8",
+    "keyphrase-vectorizers>=0.0.10",
+    "spacy>=3.7",
+    # Vector store
+    "chromadb>=0.5",
+    # Config & serialization
+    "pydantic>=2.5",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    # Report
+    "jinja2>=3.1",
+    # Utilities
+    "structlog>=24.0",
+    "numpy>=1.26,<2",
+    "click>=8.1",
+]
+
+[project.scripts]
+latent-signals = "latent_signals.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/latent_signals"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]

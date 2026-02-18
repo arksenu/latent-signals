@@ -1,0 +1,88 @@
+pipeline:
+  market_category: "email clients"
+  output_dir: "data"
+  random_seed: 42
+
+collection:
+  date_range:
+    start: "2018-01-01"
+    end: "2019-12-31"
+  exa:
+    enabled: false
+  serper:
+    enabled: false
+  apify:
+    enabled: false
+  arctic_shift:
+    enabled: true
+    subreddits:
+      - "email"
+      - "gmail"
+      - "productivity"
+      - "software"
+    max_items: 20000
+  hackernews:
+    enabled: true
+    queries:
+      - "email client"
+      - "gmail alternative"
+      - "email app"
+    max_items: 5000
+
+preprocessing:
+  min_length: 50
+  max_length: 10000
+  language: "en"
+  minhash_threshold: 0.8
+  minhash_num_perm: 128
+
+embedding:
+  model_name: "all-MiniLM-L6-v2"
+  batch_size: 256
+  device: "cpu"
+
+clustering:
+  umap:
+    n_neighbors: 15
+    n_components: 5
+    min_dist: 0.0
+    metric: "cosine"
+  hdbscan:
+    min_cluster_size: 15
+    min_samples: 5
+    metric: "euclidean"
+  nr_topics: "auto"
+  top_n_words: 10
+
+classification:
+  zero_shot:
+    model_name: "facebook/bart-large-mnli"
+    categories:
+      - "pain point"
+      - "feature request"
+      - "praise"
+      - "question"
+      - "bug report"
+    batch_size: 32
+  llm_extraction:
+    enabled: true
+    model: "gpt-4o-mini"
+    samples_per_cluster: 75
+    max_clusters: 50
+    use_batch_api: true
+
+scoring:
+  weights:
+    unaddressedness: 0.30
+    frequency: 0.25
+    pain_intensity: 0.15
+    competitive_whitespace: 0.15
+    market_size: 0.10
+    trend_direction: 0.05
+  similarity_threshold: 0.5
+  top_n_opportunities: 10
+  competitor_features_file: "config/competitor_features/gmail_2018.yaml"
+
+report:
+  format: "markdown"
+  max_quotes_per_gap: 20
