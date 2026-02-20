@@ -17,18 +17,20 @@ collection:
     enabled: true
     subreddits:
       - "jira"
-      - "projectmanagement"
       - "agile"
-    max_items: 12000
+      - "devops"
+      - "programming"
+      - "webdev"
+      - "softwareengineering"
+    max_items: 15000
   hackernews:
     enabled: false
     queries:
-      - "project management"
       - "jira alternative"
       - "jira frustration"
-      - "issue tracker"
       - "jira slow"
-      - "project management tool"
+      - "jira bloated"
+      - "jira complexity"
     max_items: 5000
 
 preprocessing:
@@ -50,10 +52,10 @@ clustering:
     min_dist: 0.0
     metric: "cosine"
   hdbscan:
-    min_cluster_size: 5
-    min_samples: 3
+    min_cluster_size: 50
+    min_samples: 10
     metric: "euclidean"
-  nr_topics: "auto"
+  nr_topics: 60
   top_n_words: 10
 
 classification:
@@ -76,15 +78,15 @@ classification:
 scoring:
   weights:
     unaddressedness: 0.30
-    frequency: 0.15
-    pain_intensity: 0.25
+    frequency: 0.25
+    pain_intensity: 0.15
     competitive_whitespace: 0.15
     market_size: 0.10
     trend_direction: 0.05
   similarity_threshold: 0.5
   top_n_opportunities: 10
   competitor_features_file: "config/competitor_features/jira_2019.yaml"
-  market_relevance_threshold: 0.35
+  market_relevance_threshold: 0.45
   min_signal_ratio: 0.25
   market_anchors:
     - "jira is slow and takes forever to load pages"
