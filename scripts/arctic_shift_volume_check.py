@@ -1,6 +1,6 @@
 """
 Check Arctic Shift post counts for discovered subreddits in 2018-09 to 2019-08.
-Verifies which subreddits had sufficient volume during the backtest period.
+Uses limit=100 to estimate volume.
 """
 
 import httpx
@@ -8,75 +8,77 @@ import httpx
 API = "https://arctic-shift.photon-reddit.com/api/posts/search"
 COMMENTS_API = "https://arctic-shift.photon-reddit.com/api/comments/search"
 
-DATE_START = "2018-09-01"
-DATE_END = "2019-08-31"
+DATE_START = "2017-03-01"
+DATE_END = "2018-02-28"
 
-# Subreddits from Exa discovery (ranked by relevance)
 SUBREDDITS = [
-    # Currently in config
-    "jira",
-    "agile",
-    "devops",
-    "programming",
-    "webdev",              # NOT surfaced by Exa
-    "softwareengineering", # NOT surfaced by Exa
-    # Discovered by Exa (not in config)
-    "projectmanagement",
-    "atlassian",
-    "experienceddevs",
-    "sysadmin",
-    "cscareerquestions",
-    "scrum",
-    "softwaredevelopment",
+    # Current config
+    "evernote",
     "productivity",
-    "saas",
+    "confluence",
+    "selfhosted",
+    # Exa-discovered
+    "notetaking",
+    "macapps",
+    "standardnotes",
+    "pkms",
+    "onenote",
+    "obsidianmd",
+    "gtd",
+    "apple",
 ]
 
 
 def count_items(subreddit: str) -> dict:
-    """Get approximate post and comment counts for a subreddit in date range."""
-    with httpx.Client(timeout=30.0) as client:
-        # Posts count - fetch first page to see total
+    """Fetch up to 100 posts and 100 comments to estimate volume."""
+    with httpx.Client(timeout=60.0) as client:
         post_resp = client.get(API, params={
             "subreddit": subreddit,
             "after": DATE_START,
             "before": DATE_END,
-            "limit": 1,
+            "limit": 100,
         })
         post_data = post_resp.json()
-        post_count = post_data.get("metadata", {}).get("total_results", len(post_data.get("data", [])))
+        posts = post_data.get("data", [])
 
-        # Comments count
         comment_resp = client.get(COMMENTS_API, params={
             "subreddit": subreddit,
             "after": DATE_START,
             "before": DATE_END,
-            "limit": 1,
+            "limit": 100,
         })
         comment_data = comment_resp.json()
-        comment_count = comment_data.get("metadata", {}).get("total_results", len(comment_data.get("data", [])))
+        comments = comment_data.get("data", [])
 
-    return {"posts": post_count, "comments": comment_count, "total": post_count + comment_count}
+    return {
+        "posts": len(posts),
+        "comments": len(comments),
+        "posts_capped": len(posts) == 100,
+        "comments_capped": len(comments) == 100,
+    }
 
 
 def main():
     print(f"Arctic Shift volume check: {DATE_START} to {DATE_END}")
-    print(f"{'Subreddit':<25} {'Posts':>8} {'Comments':>10} {'Total':>10} {'Status'}")
-    print("-" * 75)
+    print(f"{'Subreddit':<25} {'Posts':>8} {'Comments':>10} {'Note'}")
+    print("-" * 65)
 
     for sub in SUBREDDITS:
         try:
-            counts = count_items(sub)
-            status = ""
-            if counts["total"] == 0:
-                status = "EMPTY - did not exist or no data"
-            elif counts["total"] < 100:
-                status = "LOW volume"
-            elif counts["total"] < 1000:
-                status = "moderate"
+            c = count_items(sub)
+            post_str = f"{c['posts']}+" if c['posts_capped'] else str(c['posts'])
+            comm_str = f"{c['comments']}+" if c['comments_capped'] else str(c['comments'])
+            total = c['posts'] + c['comments']
+            note = ""
+            if total == 0:
+                note = "NO DATA"
+            elif total < 50:
+                note = "very low"
+            elif c['posts_capped'] or c['comments_capped']:
+                note = "GOOD (has more)"
             else:
-                status = "GOOD"
-            print(f"r/{sub:<23} {counts['posts']:>8} {counts['comments']:>10} {counts['total']:>10} {status}")
+                note = f"total ~{total}"
+            print(f"r/{sub:<23} {post_str:>8} {comm_str:>10} {note}")
         except Exception as e:
             print(f"r/{sub:<23} ERROR: {e}")
 

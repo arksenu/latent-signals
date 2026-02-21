@@ -61,3 +61,33 @@ Running log of key architectural and strategic decisions. Each entry records con
 **Alternatives rejected**: Immediate Groq deployment (over-investment at prototype stage), local model hosting (operational overhead not justified for MVP).
 
 **Status**: Active. Revisit when interactive use case is prioritized.
+
+---
+
+## 2026-02-21 - Discovery layer is pipeline input, not configuration
+
+**Context**: The Linear backtest failed six consecutive runs with hardcoded subreddit selection (r/programming, r/webdev, r/devops, r/softwareengineering, r/jira, r/agile). Each failure was attributed to clustering parameters, corpus composition, or embedding model resolution. The actual cause was never identified as input construction until this session.
+
+**Decision**: Exa discovery probe runs before every pipeline execution. The subreddit list, keyword filters, and HN query are derived from Exa results, not manually specified.
+
+**Rationale**: Six failed runs with hand-guessed inputs. One successful(ish) run with Exa-derived inputs. The only variable that changed was running the discovery layer first. r/webdev and r/softwareengineering were both hardcoded in the config but never surfaced by Exa for any project management frustration query. r/projectmanagement, r/atlassian, and r/experienceddevs were all missing from the hardcoded config but surfaced at high frequency (during Exa probe). The discovery step does the signal filtering work that HDBSCAN was being incorrectly expected to do.
+
+**Nuance**: Exa searches current web data and cannot time-travel to 2018. The correct process for historical backtests is: run Exa against current data to derive sources, verify those sources existed and had sufficient volume in Arctic Shift for the target date range, then lock the config. This adds one manual verification step but produces a defensible input set with a paper trail.
+
+**Alternatives rejected**: Continued hyperparameter tuning of HDBSCAN and UMAP with hand-guessed inputs. This approach conflated bad inputs with bad clustering and produced no actionable signal across six runs.
+
+**Status**: Active. Applies to all subsequent backtest runs (Notion, Plausible, Email control) and to production pipeline design.
+
+## 2026-02-20 - VADER produces near-zero pain intensity scores on mixed clusters
+
+**Context**: The Linear backtest run (7c16def9) produced 7 gaps. The pain_intensity component of the scoring formula contributed near-zero to most gap scores: 0.0 on gaps 3, 6, and 7; 0.03-0.16 on gaps 4 and 5. Only gap 1 (the target signal) reached 0.29. The 15% scoring weight on pain_intensity is effectively inert.
+
+**Decision**: Document as a known deficiency. Do not attempt to fix before completing the remaining backtest cases.
+
+**Rationale**: VADER averages sentiment across all documents in a cluster. Mixed clusters — which contain both pain posts and neutral/informational posts — produce averaged scores that underrepresent actual pain intensity. The result is that frequency and unaddressedness dominate the scoring formula (combined 55% weight), which surfaces high-volume generic clusters alongside genuine pain clusters. Gap 2 (generic dev culture discussion) scored 0.558 purely on volume. Gap 3 (a Q&A cluster with positive average sentiment) scored 0.528 on unaddressedness alone.
+
+**Nuance**: The backtest still passed — gap 1 ranked first regardless. But the scoring formula is not separating pain signal from volume signal cleanly. A product team reading the output would need to manually filter gaps 2, 3, and 5 as noise. That's acceptable for a prototype but not for a production report.
+
+**Future triggers**: Before v2, replace or supplement VADER with cluster-level pain detection that operates on the top-N most negative documents per cluster rather than the cluster mean. Alternatively, weight the LLM extraction step's urgency and frustration fields more heavily in the composite score. Resolve before any customer-facing output is produced.
+
+**Status**: Known deficiency. Backtest validation not blocked. Revisit before production scoring formula is finalized.

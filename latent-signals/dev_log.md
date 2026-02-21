@@ -4,6 +4,28 @@
      Format: 3–5 bullets per session, newest first.
      Tags: [built] | [broke] | [next] -->
 
+## 2026-02-21 · Session 15
+
+- [built] Exa discovery probes created and tested (`exa_discovery_probe.py`, `exa_discovery_probe_reddit.py`, `exa_discovery_notion.py`) — discovered PM frustration signals in r/productivity, r/softwaredevelopment, Jira-specific frustration, Evernote pain on Hacker News; confirmed source selection for all test cases
+- [built] Arctic Shift historical volume validators tested for 2018-2019 (Linear), 2017-2018 (Notion), and 2018-2019 (Plausible) periods — confirmed sufficient post/comment counts available for backtesting all three positive cases and Email control
+- [built] `backtest_linear.yaml` and `backtest_notion.yaml` updated with discovery-driven sources, subreddit selections, and relevance gates based on probe results; gap report generation confirmed working with visible gap_score outputs (0.705+ on Linear case)
+- [built] First successful end-to-end pipeline run with discovery-derived inputs: Linear backtest produces Jira workflow frustration at Rank 1 (gap_score=0.7051) — validates discovery layer solves the hardcoded-config problem from Sessions 2–14
+- [next] Execute Notion backtest (2017-2018 Evernote case) and Plausible backtest (GA privacy case); verify all 3 positive cases surface in top 3 gaps before Email control negative test
+
+## 2026-02-20 · Session 14
+
+- [built] Exa discovery probes (Reddit-only variant) refined; Arctic Shift volume validator (`arctic_shift_volume_check.py`) implemented; Linear backtest runs successfully with Jira workflow at rank #1 (gap_score 0.705)
+- [broke] Manual spot-check of Linear backtest gap report reveals **false positives in top 3**: Gap 2 is generic dev culture noise (mentions "heroin pricing", "IP rights", not product pain), Gap 3 is positive-sentiment Q&A cluster (pain_intensity=0.0 despite 0.66 score) — gap scoring formula or classification layer has bugs
+- [next] Audit gap scoring logic and pain_intensity calculation (why does positive sentiment Q&A rank high?); fix false positives; re-validate Linear backtest before running full validation suite (Notion, Plausible, Email control)
+
+## 2026-02-19 · Session 13
+
+- [broke] Linear backtest persists with subreddit-driven noise (PMP/MBA at ranks 1,5); Session 12 hypothesis confirmed — hardcoded source configs insufficient, discovery layer required
+- [built] Implemented Exa-based discovery probes (`exa_discovery_probe.py`, `exa_discovery_probe_reddit.py`) — identified 6 additional subreddits (projectmanagement, experienceddevs, atlassian, sysadmin, cscareerquestions, scrum) and Hacker News as rich signal source (40 Jira-related results)
+- [built] Created Arctic Shift historical validation script (`arctic_shift_volume_check.py`) to verify post volumes for 2018-2019 backtest period
+- [built] Updated `backtest_linear.yaml` with Exa discoveries: enabled Hacker News with 5,000-item limit, adjusted HDBSCAN to `min_cluster_size=15, min_samples=5`
+- [next] Re-run Linear backtest with discovery-driven config; if Jira workflow frustration surfaces in top 3, proceed to Notion, Plausible, Email control validation tests
+
 ## 2026-02-19 · Session 12
 
 - [broke] Root cause identified: **missing discovery layer**. Pipeline uses hardcoded source configs (wrong subreddits, wrong anchors) instead of Exa/Serper API to dynamically discover relevant forums — explains why every backtest run (sessions 2–12) surfaced r/projectmanagement PMP/MBA noise over Jira workflow gaps

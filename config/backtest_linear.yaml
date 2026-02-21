@@ -15,22 +15,31 @@ collection:
     enabled: false
   arctic_shift:
     enabled: true
+    # Discovery-derived: Exa probe 2026-02-19 surfaced these subreddits
+    # for "project management frustration" queries. webdev and
+    # softwareengineering were NOT surfaced and are removed.
     subreddits:
-      - "jira"
-      - "agile"
-      - "devops"
-      - "programming"
-      - "webdev"
-      - "softwareengineering"
+      - "jira"              # Exa freq: 4, direct target
+      - "projectmanagement" # Exa freq: 8, highest relevance
+      - "experienceddevs"   # Exa freq: 7, dev frustration hub
+      - "atlassian"         # Exa freq: 7, vendor-specific complaints
+      - "agile"             # Exa freq: 6, methodology frustration
+      - "devops"            # Exa freq: 5, tooling complaints
+      - "programming"       # Exa freq: 7, general dev discussion
+      - "sysadmin"          # Exa freq: 3, ops perspective
+      - "cscareerquestions"  # Exa freq: 3, career/tooling frustration
+      - "scrum"             # Exa freq: 1, methodology-specific
     max_items: 15000
   hackernews:
-    enabled: false
+    # Exa probe returned 40 HN results — richest concentrated source
+    # of Jira frustration signal. Enabling with discovery-derived queries.
+    enabled: true
     queries:
+      - "jira"
       - "jira alternative"
-      - "jira frustration"
+      - "project management"
       - "jira slow"
-      - "jira bloated"
-      - "jira complexity"
+      - "jira frustration"
     max_items: 5000
 
 preprocessing:
@@ -52,8 +61,8 @@ clustering:
     min_dist: 0.0
     metric: "cosine"
   hdbscan:
-    min_cluster_size: 50
-    min_samples: 10
+    min_cluster_size: 15
+    min_samples: 5
     metric: "euclidean"
   nr_topics: 60
   top_n_words: 10
