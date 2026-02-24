@@ -1,4 +1,11 @@
-"""Gap detection via cosine similarity between cluster centroids and competitor features."""
+"""Gap detection via cosine similarity between cluster centroids and competitor features.
+
+Currently implements coverage gaps only (low similarity = unaddressed need).
+TODO: Implement satisfaction gaps — clusters with HIGH similarity to competitor features
+but NEGATIVE sentiment indicate features a competitor claims to offer but users find
+poorly implemented. These are identifiable as: high cosine similarity + negative VADER
+compound, and represent a distinct gap type from coverage gaps.
+"""
 
 from __future__ import annotations
 

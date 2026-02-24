@@ -15,19 +15,28 @@ collection:
     enabled: false
   arctic_shift:
     enabled: true
+    # Discovery-derived: Exa probe 2026-02-21 for "note-taking frustration"
+    # confluence removed (Exa freq: 0, Arctic Shift volume: 5)
+    # pkms/obsidianmd skipped (didn't exist in 2017)
     subreddits:
-      - "evernote"
-      - "productivity"
-      - "confluence"
-      - "selfhosted"
-    max_items: 25000
+      - "evernote"         # Exa freq: 38, primary target
+      - "productivity"     # Exa freq: 19, general app frustration
+      - "notetaking"       # Exa freq: 5, directly relevant
+      - "macapps"          # Exa freq: 4, app discovery/complaints
+      - "onenote"          # competing product frustration
+      - "standardnotes"    # Exa freq: 2, Evernote alternative community
+      - "selfhosted"       # Exa freq: 2, self-hosted alternatives
+      - "gtd"              # Exa freq: 1, productivity methodology
+    max_items: 20000
   hackernews:
+    # Exa probe returned 40 HN results for Evernote frustration
     enabled: true
     queries:
+      - "evernote"
       - "evernote alternative"
       - "note taking app"
       - "evernote frustration"
-      - "workspace tool"
+      - "evernote pricing"
     max_items: 5000
 
 preprocessing:
@@ -52,7 +61,7 @@ clustering:
     min_cluster_size: 15
     min_samples: 5
     metric: "euclidean"
-  nr_topics: "auto"
+  nr_topics: 60
   top_n_words: 10
 
 classification:
@@ -83,6 +92,15 @@ scoring:
   similarity_threshold: 0.5
   top_n_opportunities: 10
   competitor_features_file: "config/competitor_features/evernote_2017.yaml"
+  market_relevance_threshold: 0.45
+  min_signal_ratio: 0.25
+  market_anchors:
+    - "evernote is too expensive and keeps raising prices"
+    - "note taking app sync is unreliable and loses my data"
+    - "evernote is bloated and slow compared to simpler alternatives"
+    - "looking for a better way to organize notes and documents for my team"
+    - "frustrated with evernote device limit on free plan"
+    - "need a workspace that combines notes docs and project management"
 
 report:
   format: "markdown"

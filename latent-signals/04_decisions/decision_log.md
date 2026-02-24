@@ -91,3 +91,31 @@ Running log of key architectural and strategic decisions. Each entry records con
 **Future triggers**: Before v2, replace or supplement VADER with cluster-level pain detection that operates on the top-N most negative documents per cluster rather than the cluster mean. Alternatively, weight the LLM extraction step's urgency and frustration fields more heavily in the composite score. Resolve before any customer-facing output is produced.
 
 **Status**: Known deficiency. Backtest validation not blocked. Revisit before production scoring formula is finalized.
+
+---
+
+## 2026-02-23 — Market relevance filtering must operate at post level, not just cluster level
+
+**Context**: The email negative control backtest (`0e03b7a3`) produced 10 high-scoring false positives, including clusters about Firefox browsers, Android phones, and Google political controversies. The `market_relevance_threshold: 0.45` gate operates at the cluster level after clustering, but by that point, off-topic posts from broad subreddits (r/degoogle, r/privacy) have already been embedded and clustered alongside on-topic content.
+
+**Decision**: Market relevance filtering needs a post-level component that runs before or during clustering — not only after. Posts that are semantically distant from the market category should be filtered or down-weighted before they form clusters.
+
+**Rationale**: The current architecture embeds all collected posts, clusters them, then checks cluster-level relevance against market anchors. This means a subreddit like r/degoogle (which discusses phones, browsers, VPNs, search engines, *and* email) contributes off-topic clusters that individually score high on unaddressedness because comparing "firefox browsers" against Gmail features produces low similarity — which the formula misinterprets as "unmet need."
+
+**Alternatives to evaluate**: (a) Pre-clustering cosine filter against market anchors with a hard cutoff; (b) Post-clustering filter with a higher threshold; (c) Hybrid — soft pre-filter plus stricter post-filter. Each has trade-offs around recall vs precision.
+
+**Status**: Must fix. Blocked on negative control passing. See `05_validation/results/backtest_summary.md` for full analysis.
+
+---
+
+## 2026-02-23 — Unaddressedness score is inverted for off-topic clusters
+
+**Context**: The gap scoring formula computes `unaddressedness = 1 - max_similarity` where `max_similarity` is the cosine similarity between a cluster's centroid and the nearest competitor feature. Off-topic clusters (e.g., "firefox browser browsers mozilla" in an email pipeline run) have very low similarity to any competitor feature — producing high unaddressedness scores. The formula treats "completely unrelated" the same as "genuinely unaddressed pain."
+
+**Decision**: The scoring formula needs a minimum similarity floor. If a cluster's max similarity to any competitor feature is below a threshold (e.g., 0.15-0.20), the cluster should be excluded from scoring entirely rather than receiving a high unaddressedness score.
+
+**Rationale**: Unaddressedness is meaningful only when the cluster is in the same semantic domain as the competitors. A cluster about browsers is not an "unaddressed email need" — it's simply not about email. The current formula cannot distinguish these cases.
+
+**Alternatives considered**: (a) Minimum similarity floor on unaddressedness (simple, direct); (b) Multiply unaddressedness by market relevance score (penalizes off-topic without hard cutoff); (c) Require cluster centroid to exceed a cosine threshold against the market category embedding. Option (a) is simplest and most defensible for V1.
+
+**Status**: Must fix. Directly caused by the structural issue above. Fix alongside market relevance filtering.

@@ -15,20 +15,29 @@ collection:
     enabled: false
   arctic_shift:
     enabled: true
+    # Discovery-derived: Exa probe 2026-02-23 for "Google Analytics privacy frustration"
+    # webflow skipped (Arctic Shift volume: ~103, too thin)
     subreddits:
-      - "analytics"
-      - "webdev"
-      - "privacy"
-      - "degoogle"
-      - "gdpr"
-    max_items: 30000
+      - "googleanalytics"   # Exa freq: 16, primary target
+      - "webdev"            # Exa freq: 8, GDPR compliance discussions
+      - "analytics"         # Exa freq: 7, general analytics frustration
+      - "privacy"           # Exa freq: 6, privacy-first tooling demand
+      - "opensource"        # Exa freq: 3, open source alternatives
+      - "degoogle"          # Exa freq: 2, anti-Google sentiment
+      - "selfhosted"        # Exa freq: 2, self-hosted analytics demand
+      - "gdpr"              # Exa freq: 0 but directly relevant to signal
+      - "wordpress"         # Exa freq: 1, GDPR-friendly GA alternatives thread
+      - "bigseo"            # Exa freq: 1, GA compliance concerns
+    max_items: 25000
   hackernews:
+    # Exa probe returned 40 HN results for GA privacy/alternative queries
     enabled: true
     queries:
+      - "google analytics"
       - "google analytics alternative"
-      - "privacy analytics"
       - "GDPR analytics"
-      - "web analytics privacy"
+      - "simple web analytics"
+      - "privacy analytics"
     max_items: 5000
 
 preprocessing:
@@ -53,7 +62,7 @@ clustering:
     min_cluster_size: 15
     min_samples: 5
     metric: "euclidean"
-  nr_topics: "auto"
+  nr_topics: 60
   top_n_words: 10
 
 classification:
@@ -84,6 +93,15 @@ scoring:
   similarity_threshold: 0.5
   top_n_opportunities: 10
   competitor_features_file: "config/competitor_features/google_analytics_2018.yaml"
+  market_relevance_threshold: 0.45
+  min_signal_ratio: 0.25
+  market_anchors:
+    - "Google Analytics tracks too much personal data and violates GDPR"
+    - "need a simple privacy-friendly alternative to Google Analytics"
+    - "Google Analytics is too complex for basic website traffic stats"
+    - "GDPR compliance requires cookie consent banners because of Google Analytics"
+    - "looking for lightweight analytics that does not use cookies"
+    - "frustrated with Google Analytics setup and configuration complexity"
 
 report:
   format: "markdown"

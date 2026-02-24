@@ -19,3 +19,15 @@ product_brief.md
 CLAUDE.md
 CLAUDE.md
 CLAUDE.md
+
+# BMAD framework scaffolding
+_bmad/
+
+# Auto-generated project docs
+architecture.md
+data-models.md
+development-guide.md
+index.md
+project-overview.md
+project-scan-report.json
+source-tree-analysis.md

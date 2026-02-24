@@ -4,13 +4,69 @@
      Format: 3–5 bullets per session, newest first.
      Tags: [built] | [broke] | [next] -->
 
+## 2026-02-23 · Session 23
+
+- [broke] Email control backtest FAIL: 10 false positives, top score 0.760 (higher than positive cases). Firefox browsers, Android phones, Google political controversies all scored as email gaps — market relevance filter too weak, unaddressedness inverted for off-topic clusters
+- [built] Plausible backtest completed (0fb9aed4): privacy/GDPR signal ranks 1-2 (gap_score 0.725, 0.692), conditional pass. Backtest writeup completed — created `latent-signals/05_validation/results/backtest_summary.md` with cross-case analysis and root-cause findings
+- [built] Email control workflow documented: executed Exa discovery probe (`scripts/exa_discovery_email.py`), Arctic Shift volume check, updated `config/backtest_email.yaml` with discovery-derived subreddits, executed backtest (0e03b7a3)
+- [built] Added 2 decision log entries (2026-02-23): post-level market relevance filtering required, unaddressedness similarity floor required to exclude off-topic clusters
+- [next] Fix market relevance filtering (operate at post level, not cluster level) and unaddressedness inversion; re-run all 4 backtests; iterate until positive cases clean AND negative control produces zero false positives
+
+## 2026-02-23 · Session 22
+
+- [broke] BMAD alpha installer crashed when existing `_bmad` folder detected — required directory rename workaround
+- [built] Applied workaround (`mv _bmad _bmad-backup && npx bmad-method@alpha install`) with interactive BMM module selection; BMM successfully installed with full SDLC suite (PRD, architecture, epics & stories, sprint planning, dev stories, code review, test workflows, research, UX design, retrospectives)
+- [next] Ignore Agent Vibes TTS commands cluttering skill list (mute with `/agent-vibes:hide` if bothersome); begin design phase using BMM workflows for product discovery and architecture
+
+## 2026-02-23 · Session 21
+
+- [built] Plausible discovery probe executed (`exa_discovery_plausible.py`) — identified analytics-focused subreddits (r/googleanalytics, r/analytics, r/privacy, r/gdpr, r/webdev, r/degoogle) with signal coverage for GA privacy gap case (2018 data period)
+- [built] `backtest_plausible.yaml` finalized with discovery-driven sources (10 subreddits: r/googleanalytics, r/opensource, r/selfhosted, r/wordpress, r/bigsea, r/analytics, r/webdev, r/privacy, r/degoogle, r/gdpr) — added 6 market_anchors (GDPR, privacy, complexity, cookie consent) and thresholds (market_relevance: 0.45, min_signal_ratio: 0.25); tuned clustering (nr_topics: 60, max_items: 25000)
+- [built] Arctic Shift historical volume validation completed for 2018 analytics subreddits — confirmed sufficient post/comment coverage for Plausible-era backtest period
+- [next] Execute Plausible backtest (GA privacy gap, Jan–Dec 2018); run Email control negative test (`backtest_email_control.yaml`); complete V1 validation suite (success: 2/3 positive in top 3 + zero false positives)
+
+## 2026-02-23 · Session 20
+
+- [built] Exa discovery probes executed for Linear, Notion, and Plausible test cases — identified on-topic subreddits (r/jira, r/projectmanagement for Linear; r/Evernote, r/notetaking for Notion) with rich signal density; Plausible probe created and staged for execution
+- [built] Arctic Shift historical volume validators run for 2018-2019 (Linear) and 2017-2018 (Notion) periods — confirmed sufficient post/comment counts to source backtests; volume validation scripts created for ongoing use
+- [built] `backtest_linear.yaml` and `backtest_notion.yaml` updated with discovery-driven source lists and refined HDBSCAN parameters (`min_cluster_size=15, min_samples=5`) — configs ready for re-validation cycles
+- [next] Execute Plausible discovery probe for GA privacy case (2018 data); run Arctic Shift volumes for 2018 analytics subreddits; update `backtest_plausible.yaml` and `backtest_email_control.yaml` with sources; complete V1 validation suite (Notion + Plausible + Email negative control)
+
+## 2026-02-23 · Session 19
+
+- [built] Discovery scripts created (`exa_discovery_probe.py`, `exa_discovery_probe_reddit.py`, `exa_discovery_notion.py`, `arctic_shift_volume_check.py`) — probes executed for Linear (2018-2019) and Notion (2017-2018) test cases; Evernote signals identified in r/Evernote, r/notetaking communities
+- [built] Configuration files updated (`backtest_linear.yaml`, `backtest_notion.yaml`) with discovery-driven source selection and refined HDBSCAN parameters for test case validation
+- [broke] API authentication error (400): "This authentication style is incompatible with the long context beta header" — halts session before Notion/Plausible/Email control backtest execution can resume
+- [broke] VADER sentiment fixes and remaining validation cases blocked — cannot complete V1 suite until auth resolved
+- [next] Fix Claude SDK authentication + long context beta compatibility; re-run Notion backtest; execute Plausible (GA privacy) and Email negative control tests to complete validation suite (success: 2/3 positive in top 3, zero false positives)
+
+## 2026-02-23 · Session 18
+
+- [broke] API authentication error (400 invalid_request_error): "This authentication style is incompatible with the long context beta header" — session halted before any work completed; suggests conflict between current auth method and SDK long context mode
+- [broke] Session 17 continuation goal (VADER sentiment fixes + Plausible/Email control backtests) blocked — cannot proceed to remaining V1 validation cases until auth resolved
+- [next] Check Claude SDK authentication setup and long context beta compatibility; verify API credentials and client initialization; disable long context mode if needed; retry VADER fixes and remaining backtest validation suite
+
+## 2026-02-22 · Session 17
+
+- [built] Linear and Notion backtests both complete with target gaps ranked #1: Linear (Jira workflow, gap_score=0.7051) and Notion (Evernote frustration, gap_score=0.6464) — validates discovery-driven source selection and full 6-stage pipeline architecture across two positive validation cases
+- [built] Corpus composition analysis reveals Notion clustering weaker than Linear due to source diversity: r/evernote single-product subreddit vs. Linear spread across 10 communities (jira, projectmanagement, experienceddevs, etc.) — affects source strategy for future backtests
+- [broke] VADER sentiment intensity preprocessing remains inadequate: yields 0.29–0.36 scores vs. expected 0.7+ for high-pain signals — negation handling and domain-specific lexicon tuning required to improve gap_score discrimination in pain component
+- [next] Apply VADER fixes (negation handling, domain tuning); re-validate Notion backtest; execute Plausible (GA privacy gap, Jan–Dec 2018) and Email negative control backtests to complete V1 validation suite (success: 2/3 positive in top 3, zero false positives)
+
+## 2026-02-21 · Session 16
+
+- [built] Both Linear (Jira workflow gap, gap_score=0.705) and Notion (Evernote frustration cluster, gap_score=0.646) backtests complete: targets rank #1 in both cases — validates stages 1–5 pipeline architecture and discovery-driven source selection (Exa probes successfully identify on-topic communities)
+- [built] Arctic Shift historical data volumes verified for 2018-2019 (Linear era, r/jira+related subreddits) and 2017-2018 (Notion era, r/Evernote+r/notetaking); market relevance gates filter noise effectively (zero off-topic gaps in Notion run vs. multiple dev-culture noise in Linear)
+- [broke] VADER sentiment intensity scoring yields overly broad pain_intensity values (0.29–0.36 vs. expected 0.7+ for high-pain signals); limits discrimination in gap_score formula's 15% pain weight component
+- [next] Fix VADER sentiment preprocessing (negation handling, domain-specific lexicon tuning); re-validate Notion backtest to confirm improvement; execute Plausible backtest (GA privacy gap, Jan 2018–Dec 2018) and Email negative control; complete V1 validation suite (2/3 positive + negative control)
+
 ## 2026-02-21 · Session 15
 
-- [built] Exa discovery probes created and tested (`exa_discovery_probe.py`, `exa_discovery_probe_reddit.py`, `exa_discovery_notion.py`) — discovered PM frustration signals in r/productivity, r/softwaredevelopment, Jira-specific frustration, Evernote pain on Hacker News; confirmed source selection for all test cases
-- [built] Arctic Shift historical volume validators tested for 2018-2019 (Linear), 2017-2018 (Notion), and 2018-2019 (Plausible) periods — confirmed sufficient post/comment counts available for backtesting all three positive cases and Email control
-- [built] `backtest_linear.yaml` and `backtest_notion.yaml` updated with discovery-driven sources, subreddit selections, and relevance gates based on probe results; gap report generation confirmed working with visible gap_score outputs (0.705+ on Linear case)
-- [built] First successful end-to-end pipeline run with discovery-derived inputs: Linear backtest produces Jira workflow frustration at Rank 1 (gap_score=0.7051) — validates discovery layer solves the hardcoded-config problem from Sessions 2–14
-- [next] Execute Notion backtest (2017-2018 Evernote case) and Plausible backtest (GA privacy case); verify all 3 positive cases surface in top 3 gaps before Email control negative test
+- [built] Exa discovery probes extended with Notion variant (`exa_discovery_notion.py`) — discovered Evernote frustration signals in r/Evernote, r/notetaking, HN Ask threads; parallel discovery for all test cases (Linear, Notion, Plausible) complete
+- [built] Arctic Shift historical volume validators confirmed for 2017-2018 (Notion era) and 2018-2019 (Linear era) — sufficient post/comment counts verified for Evernote-related subreddits and Jira-related forums
+- [built] `backtest_linear.yaml` and `backtest_notion.yaml` updated with discovery-driven sources and competitor feature vectors; Linear produces Jira workflow gap at Rank 1 (gap_score=0.7051) validating architecture fix
+- [built] First successful end-to-end pipeline run with discovery-derived inputs: Linear backtest output confirmed with visible gap_score and ranked opportunities — discovery layer solves hardcoded-config problem from Sessions 2–14
+- [next] Execute Notion backtest (2017-2018 Evernote case); verify top 3 includes Evernote frustration gap; then run Plausible backtest (GA privacy) and Email control negative test to complete validation suite
 
 ## 2026-02-20 · Session 14
 

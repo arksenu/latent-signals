@@ -8,24 +8,23 @@ import httpx
 API = "https://arctic-shift.photon-reddit.com/api/posts/search"
 COMMENTS_API = "https://arctic-shift.photon-reddit.com/api/comments/search"
 
-DATE_START = "2017-03-01"
-DATE_END = "2018-02-28"
+DATE_START = "2018-01-01"
+DATE_END = "2018-12-31"
 
 SUBREDDITS = [
     # Current config
-    "evernote",
-    "productivity",
-    "confluence",
-    "selfhosted",
+    "analytics",
+    "webdev",
+    "privacy",
+    "degoogle",
+    "gdpr",
     # Exa-discovered
-    "notetaking",
-    "macapps",
-    "standardnotes",
-    "pkms",
-    "onenote",
-    "obsidianmd",
-    "gtd",
-    "apple",
+    "googleanalytics",
+    "opensource",
+    "selfhosted",
+    "wordpress",
+    "bigseo",
+    "webflow",
 ]
 
 
