@@ -51,6 +51,7 @@ embedding:
   model_name: "all-MiniLM-L6-v2"
   batch_size: 256
   device: "cpu"
+  post_relevance_threshold: 0.20
 
 clustering:
   umap:
@@ -95,6 +96,7 @@ scoring:
   competitor_features_file: "config/competitor_features/google_analytics_2018.yaml"
   market_relevance_threshold: 0.45
   min_signal_ratio: 0.25
+  unaddressedness_floor: 0.15
   market_anchors:
     - "Google Analytics tracks too much personal data and violates GDPR"
     - "need a simple privacy-friendly alternative to Google Analytics"

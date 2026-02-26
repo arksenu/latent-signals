@@ -68,6 +68,11 @@ class EmbeddingConfig(BaseModel):
     model_name: str = "all-MiniLM-L6-v2"
     batch_size: int = 256
     device: str = "cpu"
+    # Post-level market relevance filter: drop individual documents whose max cosine
+    # similarity to any market anchor is below this threshold BEFORE clustering.
+    # Prevents off-topic posts from broad subreddits forming garbage clusters.
+    # Set to 0.0 to disable. Uses scoring.market_anchors for anchor phrases.
+    post_relevance_threshold: float = 0.0
 
 
 class UMAPConfig(BaseModel):
@@ -134,6 +139,10 @@ class ScoringConfig(BaseModel):
     # Minimum fraction of docs in a cluster classified as pain_point, feature_request,
     # or bug_report. Clusters below this are not gaps — they're questions, praise, or noise.
     min_signal_ratio: float = 0.15
+    # Minimum max-similarity to competitor features for a cluster to qualify as a gap.
+    # Clusters below this floor are completely unrelated to the market (e.g., browser
+    # clusters in an email analysis) — high unaddressedness is an artifact, not a signal.
+    unaddressedness_floor: float = 0.15
 
 
 class ReportConfig(BaseModel):

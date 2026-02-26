@@ -56,6 +56,7 @@ def score_gaps(
     market_anchor_embeddings: np.ndarray | None = None,
     market_relevance_threshold: float = 0.0,
     min_signal_ratio: float = 0.0,
+    unaddressedness_floor: float = 0.0,
 ) -> list[GapOpportunity]:
     """Score all topic clusters and return ranked gap opportunities."""
 
@@ -74,8 +75,14 @@ def score_gaps(
         if a.topic_id != -1:
             topic_doc_ids[a.topic_id].append(a.doc_id)
 
-    # Compute global stats for normalization
-    max_mention_count = max((len(dids) for dids in topic_doc_ids.values()), default=1)
+    # Compute global stats for normalization.
+    # Cap at 95th percentile to prevent mega-clusters from saturating the frequency
+    # component — a cluster with 2000 mentions shouldn't score higher than one with 500
+    # when both are large enough to represent real signal.
+    all_sizes = sorted(len(dids) for dids in topic_doc_ids.values())
+    p95_idx = max(0, int(len(all_sizes) * 0.95) - 1)
+    frequency_cap = all_sizes[p95_idx] if all_sizes else 1
+    max_mention_count = max(frequency_cap, 1)
 
     # Compute market size proxies (total score/upvotes in cluster)
     market_sizes: dict[int, float] = {}
@@ -135,15 +142,37 @@ def score_gaps(
 
         # Component 1: Unaddressedness
         max_sim = compute_max_similarity(centroid, feature_embeddings)
+
+        # Unaddressedness floor: clusters with max_sim below this threshold are
+        # completely unrelated to the competitive landscape (e.g., browser clusters
+        # in an email market). Their high unaddressedness is an artifact, not signal.
+        if unaddressedness_floor > 0 and max_sim < unaddressedness_floor:
+            log.debug(
+                "scoring.skipped_below_floor",
+                topic_id=tid,
+                label=topic_info.label,
+                max_sim=round(max_sim, 3),
+                floor=unaddressedness_floor,
+            )
+            continue
+
         unaddressedness = normalize_unaddressedness(max_sim)
 
-        # Component 2: Frequency
-        frequency = normalize_frequency(len(dids), max_mention_count)
+        # Component 2: Frequency (capped at p95 to limit mega-cluster inflation)
+        capped_count = min(len(dids), frequency_cap)
+        frequency = normalize_frequency(capped_count, max_mention_count)
 
         # Component 3: Pain intensity
+        # Use the top-N most negative VADER scores instead of cluster mean.
+        # Averaging across all docs dilutes strong frustration signals to ~0.00.
         pain_docs = [classified_map[d] for d in dids if d in classified_map]
         pain_sentiments = [c.vader_compound for c in pain_docs if c.category in ("pain_point", "bug_report")]
-        avg_sentiment = np.mean(pain_sentiments).item() if pain_sentiments else 0.0
+        if pain_sentiments:
+            pain_sentiments_sorted = sorted(pain_sentiments)  # most negative first
+            top_n_pain = pain_sentiments_sorted[:20]
+            avg_sentiment = np.mean(top_n_pain).item()
+        else:
+            avg_sentiment = 0.0
         pain_intensity = normalize_pain_intensity(avg_sentiment)
 
         # Component 4: Competitive whitespace

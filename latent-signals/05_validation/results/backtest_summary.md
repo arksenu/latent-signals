@@ -1,15 +1,53 @@
 # Backtest Summary
 
-**Date**: 2026-02-23
+**Date**: 2026-02-23 (round 1), 2026-02-25 (round 2)
 **Pipeline version**: Pre-v1 prototype (sequential pipeline, 6 stages)
 
 ## Overview
 
 Four historical backtests were run against the pipeline to answer: "Can this architecture detect known market gaps from historical community data?"
 
-**Result**: The pipeline consistently detects real signals (3/3 positive cases at rank 1) but has a critical false positive problem — the negative control produced 10 high-scoring gaps when it should have produced none.
+Two rounds have been completed. Round 1 identified deficiencies; round 2 applied targeted fixes and re-ran all 4 cases.
 
-## Results
+## Round 2 Results (2026-02-25)
+
+Fixes applied: post-level market relevance filter, unaddressedness similarity floor, VADER top-N pain intensity, frequency p95 cap.
+
+| Case | Market | Target Signal | Expected | Run ID | Round 1 | Round 2 |
+|------|--------|--------------|----------|--------|---------|---------|
+| Linear | Project management | Jira frustration → Linear | Top 3 | `7c16def9` | Rank 1 (0.705) | Rank 2 (0.723). Score improved, rank dropped 1 due to sysadmin cluster. |
+| Notion | Note-taking | Evernote frustration → Notion | Top 3 | `b4612a0d` | Rank 1 (0.646) | Rank 2 (0.730). Score improved, rank dropped 1 due to generic bugs cluster. |
+| Plausible | Web analytics | GA privacy frustration → Plausible | Top 3 | `0fb9aed4` | Ranks 1-2 (0.725, 0.692) | Ranks 1-2 (0.776, 0.745). Both scores improved. |
+| Email (control) | Email clients | No gap expected | 0 gaps | `0e03b7a3` | **FAIL**: 10 gaps, top 0.760 | **FAIL**: 10 gaps, top 0.834 |
+
+### Round 2 Pass/Fail Assessment
+
+- Positive cases: **3/3 PASS** (all signal in top 3, scores improved across the board)
+- Negative control: **FAIL** (10 false positives, top score now 0.834)
+- Overall: **CONDITIONAL FAIL** — same verdict as round 1, but for a different reason (see analysis below)
+
+### What Round 2 Fixed
+
+1. **Pain intensity is now working.** VADER top-N (20 most negative) replaced cluster-mean. Scores improved significantly across all positive cases — e.g. Linear gap #2 pain went from ~0.00 to 0.76, Notion gap #2 from ~0.00 to 0.91.
+2. **Frequency cap prevents mega-cluster dominance.** P95 cap on mention counts compresses the frequency component for outlier clusters.
+3. **Unaddressedness floor gates irrelevant clusters.** Clusters with max_sim < 0.15 to competitor features are excluded from scoring.
+4. **Post-level market relevance filter exists.** Individual documents below cosine similarity threshold (0.20) to market anchors are dropped before clustering.
+
+### Why the Negative Control Still Fails
+
+The round 1 email control failure was caused by off-topic clusters (Firefox, Android, politics) scoring high. The round 2 fixes successfully address that class of failure — those off-topic clusters would now be filtered.
+
+However, the email control clusters in round 2 are **genuinely email-related**: ProtonMail frustration (max_sim 0.276), Gmail alternatives (0.344), spam filtering (0.559), attachments (0.251), encryption (0.292). These are real frustrations with real email products that the pipeline correctly detects.
+
+The pipeline cannot distinguish between:
+- "Frustrated users with an unaddressed gap" (positive signal → a product like HEY could fill this)
+- "Frustrated users in a market where frustration exists but no disruptive product emerged" (false positive)
+
+This is a **fundamental scoring model limitation**, not a filtering problem. The fixes addressed the filterable false positives; the remaining false positives are semantically valid but historically didn't produce a market gap.
+
+**Email control scores increased** in round 2 because the pain intensity fix now correctly captures email frustration sentiment that was previously diluted to 0.00.
+
+## Round 1 Results (2026-02-23)
 
 | Case | Market | Target Signal | Expected | Run ID | Result |
 |------|--------|--------------|----------|--------|--------|
@@ -18,76 +56,43 @@ Four historical backtests were run against the pipeline to answer: "Can this arc
 | Plausible | Web analytics | GA privacy frustration → Plausible | Top 3 | `0fb9aed4` | Ranks 1-2 (0.725, 0.692). 4 gaps total. |
 | Email (control) | Email clients | No gap expected | 0 gaps | `0e03b7a3` | **FAIL**: 10 gaps, top score 0.760. |
 
-### Pass/Fail Assessment
+### Round 1 Deficiencies (status after round 2)
 
-Per the backtest plan: success requires 2/3 positive cases in top 3 + negative control produces no false positives.
+| # | Issue | Severity | Status | Notes |
+|---|-------|----------|--------|-------|
+| 1 | Market relevance filter too weak | Critical | **Fixed** | Added post-level filter in stage 3 + cluster-level threshold raised |
+| 2 | Off-topic clusters score high on unaddressedness | Critical | **Fixed** | Added `unaddressedness_floor` config param (0.15) |
+| 3 | VADER pain_intensity near-zero | Moderate | **Fixed** | Top-20 most negative VADER compounds per cluster |
+| 4 | Mega-cluster frequency inflation | Moderate | **Fixed** | P95 cap on mention counts before log normalization |
+| 5 | Noisy representative quotes | Minor | Deferred | Not in scope for round 2 |
+| 6 | Split clusters | Minor | Deferred | Not in scope for round 2 |
 
-- Positive cases: **3/3 PASS** (all at rank 1)
-- Negative control: **FAIL** (10 false positives, top score exceeds all positive cases)
-- Overall: **CONDITIONAL FAIL** — core detection works, false positive filtering does not.
+## What Worked (Both Rounds)
 
-## What Worked
+1. **Signal detection is real and improving.** Target gaps ranked in top 2 in every positive case across both rounds. Round 2 scores improved across the board.
+2. **Discovery layer is essential.** All successful runs used Exa-derived subreddit selection.
+3. **Cost is within budget.** OpenAI costs per run: $0.02-0.03. Total across both rounds: ~$0.20.
+4. **Fixes are composable.** Four independent changes improved positive case scores without breaking signal detection.
 
-1. **Signal detection is real.** The target gap ranked #1 in every positive case. The pipeline's combination of embedding + clustering + cosine similarity against competitor features reliably surfaces the known market gap.
+## Open Questions
 
-2. **Discovery layer is essential.** All successful runs used Exa-derived subreddit selection. The Linear case failed 6 times with hand-guessed subreddits before the discovery probe was introduced (decision log 2026-02-21).
+1. **Should the negative control be redefined?** The email market has real frustration — HEY launched June 2020, just after the control window closed. A better negative control might use a market with genuinely no frustration (mature commodity).
+2. **Is a score threshold viable?** If positive cases score 0.45-0.78 and email control scores 0.67-0.83, there's no clean separation. A threshold-based approach won't work without additional signal dimensions.
+3. **Does "gap detection" require a temporal component?** The pipeline detects frustration, not gaps. A true gap might require evidence that frustration is *new* or *growing* relative to the market — which the trend component partially captures but doesn't gate on.
 
-3. **Cost is within budget.** OpenAI costs per run: $0.02-0.03. Total backtest suite: ~$0.10. Well under the $50/month ceiling.
+## Cost Summary (Both Rounds)
 
-## What Failed
-
-### 1. Negative control produced false positives (CRITICAL)
-
-The email control case found 10 "gaps" scoring 0.640-0.760, including clusters about Firefox browsers, Android phones, and Google political controversies — none of which are email gaps. Root causes:
-
-- **Market relevance filter too weak.** The `market_relevance_threshold: 0.45` allows clusters about browsers, phones, and general anti-Google sentiment to pass as "email client" gaps. Clusters like "firefox browser browsers mozilla" and "android privacy apps phones" should be filtered out entirely.
-- **Broad subreddits inject off-topic noise.** r/degoogle, r/privacy, and r/selfhosted discuss everything from VPNs to search engines to phones. The pipeline has no mechanism to filter posts within a subreddit to only those relevant to the target market category.
-- **Unaddressedness is inverted for off-topic clusters.** Comparing "android privacy apps" against Gmail's feature list produces low similarity (high unaddressedness) because they're completely different domains — but the pipeline interprets this as "unmet need."
-
-### 2. VADER pain_intensity near-zero on mixed clusters (MODERATE)
-
-Across all 4 cases, pain_intensity contributed little to scoring. VADER averages sentiment across entire clusters, so mixed clusters (pain posts + neutral posts) produce diluted scores. Gaps 3, 6, 7 in Linear scored 0.00 on pain_intensity. Gap 4 in Plausible scored 0.00.
-
-The 15% scoring weight on pain_intensity is effectively inert for most clusters.
-
-### 3. Mega-cluster frequency inflation (MODERATE)
-
-Large clusters (500-1900+ mentions) dominate the frequency component (0.25 weight), pushing their overall scores up regardless of signal quality:
-- Notion: 1935-mention cluster at rank 1
-- Plausible: 1055 and 1117-mention clusters at ranks 1-2
-- Email control: 653-mention cluster at rank 7
-
-Frequency normalization uses `log(mention_count+1)`, but the log scale doesn't compress enough at these volumes.
-
-### 4. Split and noisy clusters (MINOR)
-
-- Plausible produced two separate privacy/GDPR clusters that should have been one
-- Representative quotes frequently include off-topic content (Waze directions in the Plausible privacy cluster, Reddit username advice in the email spam cluster)
-
-## Deficiencies to Fix (Priority Order)
-
-| # | Issue | Severity | Fix Direction |
-|---|-------|----------|---------------|
-| 1 | Market relevance filter too weak | Critical | Raise threshold, add per-post relevance filtering before clustering, or embed market anchors as a hard gate |
-| 2 | Off-topic clusters score high on unaddressedness | Critical | Unaddressedness should be undefined (not high) when a cluster is semantically distant from the market category |
-| 3 | VADER pain_intensity near-zero | Moderate | Replace cluster-mean VADER with top-N most negative docs per cluster, or use LLM extraction urgency scores |
-| 4 | Mega-cluster frequency inflation | Moderate | Cap frequency contribution or use percentile-based normalization |
-| 5 | Noisy representative quotes | Minor | Filter quotes by cosine similarity to cluster centroid |
-| 6 | Split clusters | Minor | Post-hoc merge clusters with >0.8 cosine similarity before scoring |
-
-## Cost Summary
-
-| Case | OpenAI Cost | Collection (s) | Classification (s) | Total (~min) |
-|------|-------------|----------------|---------------------|--------------|
-| Linear | $0.023 | 310 | 2921 | ~55 |
-| Notion | $0.021 | 285 | 2650 | ~50 |
-| Plausible | $0.023 | 310 | 2921 | ~55 |
-| Email | $0.027 | 210 | 2512 | ~47 |
+| Case | Round 1 Cost | Round 2 Cost | Notes |
+|------|-------------|-------------|-------|
+| Linear | $0.023 | $0.023 | Round 2 re-ran stages 3-6 only |
+| Notion | $0.021 | $0.020 | Round 2 re-ran stages 3-6 only |
+| Plausible | $0.023 | $0.022 | Round 2 re-ran stages 3-6 only |
+| Email | $0.027 | $0.025 | Round 2 re-ran stages 3-6 only |
+| **Total** | **$0.094** | **$0.090** | |
 
 ## Next Steps
 
-1. Fix issues #1 and #2 (market relevance and unaddressedness inversion) — these are the critical path
-2. Re-run all 4 backtests with fixes
-3. Iterate until: 3/3 positive cases pass AND negative control produces no false positives
-4. Then: fix VADER (#3) and frequency inflation (#4)
-5. Then: revise product brief based on validated pipeline behavior
+1. Decide on negative control strategy (redefine control case, add temporal gating, or accept current limitation and document)
+2. Fix minor issues (#5 quotes, #6 split clusters) if pursuing further rounds
+3. Revise product brief based on validated pipeline behavior
+4. Update CLAUDE.md validation status

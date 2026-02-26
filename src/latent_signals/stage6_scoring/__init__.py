@@ -79,6 +79,7 @@ def run(config: Config, run_id: str) -> None:
         market_anchor_embeddings=market_anchor_embeddings,
         market_relevance_threshold=config.scoring.market_relevance_threshold,
         min_signal_ratio=config.scoring.min_signal_ratio,
+        unaddressedness_floor=config.scoring.unaddressedness_floor,
     )
 
     # Generate report
