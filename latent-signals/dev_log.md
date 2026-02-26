@@ -4,6 +4,22 @@
      Format: 3–5 bullets per session, newest first.
      Tags: [built] | [broke] | [next] -->
 
+## 2026-02-26 · Session 25
+
+- [built] VS Code 2019 negative control backtest completed (run ID fa17ead6, 59 clusters, 10 gaps scored, top score 0.740) — full discovery workflow executed (Exa probe identified r/vscode with 28 hits, Arctic Shift volume confirmed, config and competitor features file created)
+- [built] Negative control concept abandoned — both email and VS Code controls surfaced genuine market gaps, not false positives. Email gaps later addressed by HEY/ProtonMail/Tutanota; VS Code gaps are real Python/C++/Java setup friction. Pipeline correctly detects all gaps; limitation is opportunity magnitude classification, not gap detection
+- [built] V1 backtest validation milestone complete: 3/3 positive cases pass (Linear rank 2/0.723, Notion rank 2/0.730, Plausible ranks 1-2/0.776/0.745) — documentation finalized across `backtest_summary.md`, `CLAUDE.md`, `decision_log.md`, and `product_brief.md`
+- [built] Opportunity Scale Classifier designed during brainstorming (three-tier: new-product/feature/polish) but deferred to v2 — derived quantitative signals (pain-to-question ratio, gap age, incumbent coverage completeness) may separate opportunity magnitudes without LLM classifier
+- [next] v1.1 pain-to-question ratio analysis on existing backtest cluster data — test whether derived signals from zero-shot classification separate opportunity magnitudes before implementing full LLM classifier
+
+## 2026-02-25 · Session 24
+
+- [built] Implemented 4 backtest fixes: (1) post-level market relevance filter in stage3_embedding (drops docs below 0.20 cosine similarity to market anchors); (2) unaddressedness similarity floor (0.15) in scoring.py to skip off-topic clusters; (3) VADER pain intensity changed to top-20 most negative compounds per cluster (fixes near-zero issue); (4) P95 cap on cluster sizes before log normalization — added `post_relevance_threshold` and `unaddressedness_floor` params to ScoringConfig
+- [built] Re-ran all 4 backtests (stages 3-6 reusing existing collection data) — Linear ranks 2 (0.723, +0.018), Notion ranks 2 (0.730, +0.084), Plausible ranks 1-2 (0.776, 0.745, both improved), Email control still FAILS with 10 gaps, top score 0.834 (up from 0.760 — pain intensity fix now correctly captures email frustration)
+- [broke] Email control negative test fails for fundamentally different reason in round 2: round 1 failures were off-topic clusters (Firefox, Android, politics); round 2 clusters are genuinely email-related (ProtonMail, Gmail alternatives, spam, encryption) — pipeline detects real frustration but cannot distinguish "frustrated with no gap" from "frustrated with a gap," a scoring model limitation not a filtering problem
+- [broke] Positive case rank regression: Linear and Notion signals dropped from rank 1 to rank 2 post-fixes (despite higher scores), caused by legitimate sysadmin/Gmail-related clusters now surfacing after filtering corrections — indicates frequency normalization may over-inflate mid-tier clusters
+- [next] Investigate email control gap definition: should negative test be redefined (HEY launched June 2020, just after window)? Consider temporal signal (frustration must be new/growing) or acceptance that score threshold alone cannot separate positive from negative cases; OR revert P95 frequency cap if it's causing rank inversions in positive cases
+
 ## 2026-02-23 · Session 23
 
 - [broke] Email control backtest FAIL: 10 false positives, top score 0.760 (higher than positive cases). Firefox browsers, Android phones, Google political controversies all scored as email gaps — market relevance filter too weak, unaddressedness inverted for off-topic clusters

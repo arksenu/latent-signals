@@ -1,0 +1,103 @@
+pipeline:
+  market_category: "code editors"
+  output_dir: "data"
+  random_seed: 42
+
+collection:
+  date_range:
+    start: "2019-01-01"
+    end: "2019-12-31"
+  exa:
+    enabled: false
+  serper:
+    enabled: false
+  apify:
+    enabled: false
+  arctic_shift:
+    enabled: true
+    # Discovery-derived: Exa probe 2026-02-25 for "VS Code frustration/discussion"
+    subreddits:
+      - "vscode"               # Exa freq: 28, primary community
+      - "visualstudiocode"     # Exa freq: 6, secondary community
+      - "programming"          # Exa freq: 3, general dev discussion
+      - "webdev"               # Exa freq: 1, VS Code's primary user base
+      - "learnprogramming"     # Exa freq: 3, beginner VS Code users
+    max_items: 25000
+  hackernews:
+    # Exa probe returned 40 HN results for VS Code queries
+    enabled: true
+    queries:
+      - "VS Code"
+      - "Visual Studio Code"
+      - "VS Code alternative"
+      - "code editor"
+    max_items: 5000
+
+preprocessing:
+  min_length: 50
+  max_length: 10000
+  language: "en"
+  minhash_threshold: 0.8
+  minhash_num_perm: 128
+
+embedding:
+  model_name: "all-MiniLM-L6-v2"
+  batch_size: 256
+  device: "cpu"
+  post_relevance_threshold: 0.20
+
+clustering:
+  umap:
+    n_neighbors: 15
+    n_components: 5
+    min_dist: 0.0
+    metric: "cosine"
+  hdbscan:
+    min_cluster_size: 15
+    min_samples: 5
+    metric: "euclidean"
+  nr_topics: 60
+  top_n_words: 10
+
+classification:
+  zero_shot:
+    model_name: "facebook/bart-large-mnli"
+    categories:
+      - "pain point"
+      - "feature request"
+      - "praise"
+      - "question"
+      - "bug report"
+    batch_size: 32
+  llm_extraction:
+    enabled: true
+    model: "gpt-4o-mini"
+    samples_per_cluster: 75
+    max_clusters: 50
+    use_batch_api: true
+
+scoring:
+  weights:
+    unaddressedness: 0.30
+    frequency: 0.25
+    pain_intensity: 0.15
+    competitive_whitespace: 0.15
+    market_size: 0.10
+    trend_direction: 0.05
+  similarity_threshold: 0.5
+  top_n_opportunities: 10
+  competitor_features_file: "config/competitor_features/vscode_2019.yaml"
+  market_relevance_threshold: 0.45
+  min_signal_ratio: 0.25
+  unaddressedness_floor: 0.15
+  market_anchors:
+    - "VS Code is slow and uses too much memory"
+    - "frustrated with VS Code extensions not working"
+    - "VS Code performance problems with large projects"
+    - "need a faster alternative to VS Code"
+    - "VS Code debugging is confusing and hard to set up"
+    - "VS Code remote development has connectivity issues"
+
+report:
+  format: "markdown"
+  max_quotes_per_gap: 20
