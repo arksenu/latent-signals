@@ -14,10 +14,8 @@ uv.lock
 Building_a_Market_Gap_Finder.md
 project_doc_directory_structure.md
 1. Meeting Summary.md
-product_brief.md
+# product_brief.md — tracked (canonical project doc)
 .claude/
-CLAUDE.md
-CLAUDE.md
 CLAUDE.md
 
 # BMAD framework scaffolding
@@ -31,5 +29,5 @@ index.md
 project-overview.md
 project-scan-report.json
 source-tree-analysis.md
-TODO.MD
+# TODO.md — tracked (project work items)
 _bmad-output/

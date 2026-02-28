@@ -4,6 +4,21 @@
      Format: 3–5 bullets per session, newest first.
      Tags: [built] | [broke] | [next] -->
 
+## 2026-02-27 · Session 27
+
+- [built] Pain-to-question ratio analysis completed across all 5 backtest cases — signal absent. All opportunity groups land in 0.77–0.89 P2Q band; CMake (polish) has P2Q=1.33 while Jira (new-product) has P2Q=0.55, inverted from hypothesis. Classifier responds to emotional temperature, not opportunity magnitude
+- [built] Corrected Notion cluster misidentification: gap #2 is OneNote frustration, not Evernote. Evernote cluster is gap #3 (score 0.657). Updated backtest_summary.md, CLAUDE.md, and MEMORY.md with corrected ranks/scores
+- [built] Decision log entry added (2026-02-27): P2Q ratio experiment closed, LLM-based rhetorical framing analysis remains v2 path. Remaining derived signal candidates: gap age (temporal persistence), incumbent coverage completeness
+- [built] Updated CLAUDE.md and MEMORY.md with v1.1 P2Q results and Notion correction
+- [next] V1 doc finalization: create RUN_MANIFEST.md, sync product_brief.md, update TODO.md, add missing dev_log entries
+
+## 2026-02-26 · Session 26
+
+- [built] VS Code 2019 control backtest completed (run ID fa17ead6): full discovery workflow (Exa probe → Arctic Shift volume → config → competitor features → pipeline run). 59 clusters, 10 gaps scored, top score 0.740. Python setup, C++ toolchain, and Java support friction surfaced as top gaps
+- [built] Negative control concept formally abandoned — both email and VS Code controls surfaced genuine market gaps, not false positives. Pipeline correctly detects all gaps; limitation is opportunity magnitude classification (deferred to v2 Opportunity Scale Classifier)
+- [built] V1 backtest validation gate declared passed: 3/3 positive cases in top 3 (Linear rank 2/0.723, Notion rank 3/0.657, Plausible ranks 1-2/0.776/0.745). Documentation finalized across backtest_summary.md, CLAUDE.md, decision_log.md, product_brief.md
+- [next] v1.1 pain-to-question ratio analysis on existing cluster data — test whether derived signals separate opportunity magnitudes before implementing full LLM classifier
+
 ## 2026-02-26 · Session 25
 
 - [built] VS Code 2019 negative control backtest completed (run ID fa17ead6, 59 clusters, 10 gaps scored, top score 0.740) — full discovery workflow executed (Exa probe identified r/vscode with 28 hits, Arctic Shift volume confirmed, config and competitor features file created)
