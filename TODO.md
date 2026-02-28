@@ -2,7 +2,7 @@
 
 Tracked work items for Latent Signals pipeline. Updated 2026-02-27.
 
-## Completed (v1 validation milestone)
+## Completed (Engine validation milestone)
 
 - [x] **Post-level market relevance filter** — Fixed in round 2. Drops docs below cosine 0.20 to market anchors before clustering. Config: `embedding.post_relevance_threshold`.
 - [x] **Unaddressedness similarity floor** — Fixed in round 2. Clusters with max_sim < 0.15 excluded from scoring. Config: `scoring.unaddressedness_floor`.
@@ -11,7 +11,7 @@ Tracked work items for Latent Signals pipeline. Updated 2026-02-27.
 - [x] **Backtest validation** — 3/3 positive cases pass (Linear rank 2/0.723, Notion rank 3/0.657, Plausible ranks 1-2/0.776/0.745). 2 control cases (email, VS Code) confirm pipeline detects real gaps. Validation gate passed.
 - [x] **Documentation finalized** — backtest_summary.md, CLAUDE.md, decision_log.md, product_brief.md all updated.
 
-## v1.1 — Opportunity Magnitude Signals
+## Opportunity Magnitude Signals
 
 - [x] **Pain-to-question ratio analysis** — Signal absent. All opportunity groups land in 0.77–0.89 P2Q band; CMake (polish) has P2Q=1.33 while Jira (new-product) has P2Q=0.55 — inverted from hypothesis. Classifier responds to emotional temperature, not magnitude. See decision log 2026-02-27.
 - [ ] **Gap age / temporal persistence** — Explore whether complaint duration (how long frustration persists across the observation window) correlates with opportunity magnitude. Requires timestamp analysis of posts within clusters.

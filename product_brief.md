@@ -1,6 +1,6 @@
 # Latent Signals — Product Brief
 
-**Status:** Active — v1 validated
+**Status:** Active - Engine validated
 **Last updated:** February 26, 2026
 
 ---
@@ -113,7 +113,7 @@ These constraints are derived from strategic decisions and must be respected by 
 
 ## Validation Results
 
-The v1 pipeline has been validated through historical backtests. Five test cases were run across two rounds of fixes.
+The engine pipeline has been validated through historical backtests. Five test cases were run across two rounds of fixes.
 
 **Positive cases (3/3 PASS):**
 - **Linear** (Sept 2018 - Aug 2019): Jira frustration gap detected at rank 2 (score 0.723). Linear launched Sept 2019 to address exactly this gap.

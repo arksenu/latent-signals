@@ -1,3 +1,3 @@
 # Data Pipeline
-**Status:** Not yet written
-**Purpose:** Detail the end-to-end data flow from ingestion (Exa, Serper, Apify) through NLP processing to vector storage and gap scoring.
+
+See `architecture.md` at project root for full pipeline documentation including stage details, data flow, intermediate artifacts, and configuration hierarchy.

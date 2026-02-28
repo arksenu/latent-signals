@@ -1,3 +1,3 @@
 # Go-to-Market Plan
-**Status:** Not yet written
-**Purpose:** Outline the launch strategy, target customer segments, distribution channels, and early adoption tactics.
+
+**Status:** Deferred to pre-launch phase. V1 is a validated prototype; these decisions are premature until the tool is tested with real users.

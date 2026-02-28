@@ -1,8 +1,8 @@
 # Backtest Summary
 
 **Date**: 2026-02-23 (round 1), 2026-02-25 (round 2), 2026-02-26 (VS Code control + final assessment)
-**Pipeline version**: v1 prototype (sequential pipeline, 6 stages)
-**Verdict**: **V1 backtest validation gate passed.**
+**Pipeline version**: Engine prototype (sequential pipeline, 6 stages)
+**Verdict**: **Engine backtest validation gate passed.**
 
 ## Overview
 

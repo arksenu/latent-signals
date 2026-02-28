@@ -1,3 +1,3 @@
 # Pricing Model
-**Status:** Not yet written
-**Purpose:** Define pricing tiers, cost structure analysis, and revenue model for B2B customers.
+
+**Status:** Deferred to pre-launch phase. V1 is a validated prototype; these decisions are premature until the tool is tested with real users.

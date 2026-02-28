@@ -5,7 +5,7 @@
 
 ---
 
-This document specifies the historical backtest plan for validating the v1 Latent Signals pipeline. The objective is to prove that the pipeline can retroactively identify validated market gaps by analyzing public community sentiment from the 6-12 month period preceding a successful product launch. This backtest is the definitive milestone for v1; its success is a prerequisite for any v2 development.
+This document specifies the historical backtest plan for validating the engine Latent Signals pipeline. The objective is to prove that the pipeline can retroactively identify validated market gaps by analyzing public community sentiment from the 6-12 month period preceding a successful product launch. This backtest is the definitive milestone for the engine; its success is a prerequisite for any v2 development.
 
 ## 1. Test Case Selection
 
@@ -111,7 +111,7 @@ This avoids the problem of setting an arbitrary absolute threshold (e.g., 0.75) 
 - **Rank:** The historically-validated market gap must appear within the **top 3** ranked opportunities in the final report.
 - **Gap Score:** The identified gap must score at or above the calibrated threshold (90th percentile from the Linear calibration run).
 - **Content Match:** Evaluation is based on the content of the representative documents within the identified cluster, not on the auto-generated topic label. If the cluster's representative posts describe the known pain point (e.g., posts complaining about Jira's speed, bloat, and developer-hostile UX), the detection is valid regardless of whether BERTopic labels it "Jira performance" or "project management frustration" or something generic. A human reviewer examines the top 20 representative documents per flagged cluster to make this judgment.
-- **Pass Threshold:** At least two of the three positive test cases must produce a valid detection (top 3 rank, above threshold, content match confirmed) for the v1 backtest to pass.
+- **Pass Threshold:** At least two of the three positive test cases must produce a valid detection (top 3 rank, above threshold, content match confirmed) for the engine backtest to pass.
 
 ### Negative Control Criteria
 
@@ -171,7 +171,7 @@ For each positive case, a human reviewer examines the top 20 representative docu
 
 For the negative control, verify that no cluster in the top 3 exceeds the calibrated threshold.
 
-A final summary report synthesizes the results of all four cases and issues a definitive pass/fail judgment on the v1 pipeline.
+A final summary report synthesizes the results of all four cases and issues a definitive pass/fail judgment on the engine pipeline.
 
 ---
 

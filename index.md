@@ -8,7 +8,7 @@
 - **Primary Language:** Python 3.11+
 - **Architecture:** Sequential 6-stage pipeline with CLI orchestration
 - **Package Manager:** uv + hatchling
-- **Status:** V1 validated, backtest gate passed (5/5 complete)
+- **Status:** Engine validated, backtest gate passed (5/5 complete)
 
 ## Quick Reference
 

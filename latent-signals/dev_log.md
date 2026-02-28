@@ -9,23 +9,23 @@
 - [built] Pain-to-question ratio analysis completed across all 5 backtest cases — signal absent. All opportunity groups land in 0.77–0.89 P2Q band; CMake (polish) has P2Q=1.33 while Jira (new-product) has P2Q=0.55, inverted from hypothesis. Classifier responds to emotional temperature, not opportunity magnitude
 - [built] Corrected Notion cluster misidentification: gap #2 is OneNote frustration, not Evernote. Evernote cluster is gap #3 (score 0.657). Updated backtest_summary.md, CLAUDE.md, and MEMORY.md with corrected ranks/scores
 - [built] Decision log entry added (2026-02-27): P2Q ratio experiment closed, LLM-based rhetorical framing analysis remains v2 path. Remaining derived signal candidates: gap age (temporal persistence), incumbent coverage completeness
-- [built] Updated CLAUDE.md and MEMORY.md with v1.1 P2Q results and Notion correction
-- [next] V1 doc finalization: create RUN_MANIFEST.md, sync product_brief.md, update TODO.md, add missing dev_log entries
+- [built] Updated CLAUDE.md and MEMORY.md with P2Q results and Notion correction
+- [next] Engine-validation doc finalization: create RUN_MANIFEST.md, sync product_brief.md, update TODO.md, add missing dev_log entries
 
 ## 2026-02-26 · Session 26
 
 - [built] VS Code 2019 control backtest completed (run ID fa17ead6): full discovery workflow (Exa probe → Arctic Shift volume → config → competitor features → pipeline run). 59 clusters, 10 gaps scored, top score 0.740. Python setup, C++ toolchain, and Java support friction surfaced as top gaps
 - [built] Negative control concept formally abandoned — both email and VS Code controls surfaced genuine market gaps, not false positives. Pipeline correctly detects all gaps; limitation is opportunity magnitude classification (deferred to v2 Opportunity Scale Classifier)
-- [built] V1 backtest validation gate declared passed: 3/3 positive cases in top 3 (Linear rank 2/0.723, Notion rank 3/0.657, Plausible ranks 1-2/0.776/0.745). Documentation finalized across backtest_summary.md, CLAUDE.md, decision_log.md, product_brief.md
-- [next] v1.1 pain-to-question ratio analysis on existing cluster data — test whether derived signals separate opportunity magnitudes before implementing full LLM classifier
+- [built] Engine backtest validation gate declared passed: 3/3 positive cases in top 3 (Linear rank 2/0.723, Notion rank 3/0.657, Plausible ranks 1-2/0.776/0.745). Documentation finalized across backtest_summary.md, CLAUDE.md, decision_log.md, product_brief.md
+- [next] Pain-to-question ratio analysis on existing cluster data — test whether derived signals separate opportunity magnitudes before implementing full LLM classifier
 
 ## 2026-02-26 · Session 25
 
 - [built] VS Code 2019 negative control backtest completed (run ID fa17ead6, 59 clusters, 10 gaps scored, top score 0.740) — full discovery workflow executed (Exa probe identified r/vscode with 28 hits, Arctic Shift volume confirmed, config and competitor features file created)
 - [built] Negative control concept abandoned — both email and VS Code controls surfaced genuine market gaps, not false positives. Email gaps later addressed by HEY/ProtonMail/Tutanota; VS Code gaps are real Python/C++/Java setup friction. Pipeline correctly detects all gaps; limitation is opportunity magnitude classification, not gap detection
-- [built] V1 backtest validation milestone complete: 3/3 positive cases pass (Linear rank 2/0.723, Notion rank 2/0.730, Plausible ranks 1-2/0.776/0.745) — documentation finalized across `backtest_summary.md`, `CLAUDE.md`, `decision_log.md`, and `product_brief.md`
+- [built] Engine backtest validation milestone complete: 3/3 positive cases pass (Linear rank 2/0.723, Notion rank 2/0.730, Plausible ranks 1-2/0.776/0.745) — documentation finalized across `backtest_summary.md`, `CLAUDE.md`, `decision_log.md`, and `product_brief.md`
 - [built] Opportunity Scale Classifier designed during brainstorming (three-tier: new-product/feature/polish) but deferred to v2 — derived quantitative signals (pain-to-question ratio, gap age, incumbent coverage completeness) may separate opportunity magnitudes without LLM classifier
-- [next] v1.1 pain-to-question ratio analysis on existing backtest cluster data — test whether derived signals from zero-shot classification separate opportunity magnitudes before implementing full LLM classifier
+- [next] Pain-to-question ratio analysis on existing backtest cluster data — test whether derived signals from zero-shot classification separate opportunity magnitudes before implementing full LLM classifier
 
 ## 2026-02-25 · Session 24
 
@@ -54,27 +54,27 @@
 - [built] Plausible discovery probe executed (`exa_discovery_plausible.py`) — identified analytics-focused subreddits (r/googleanalytics, r/analytics, r/privacy, r/gdpr, r/webdev, r/degoogle) with signal coverage for GA privacy gap case (2018 data period)
 - [built] `backtest_plausible.yaml` finalized with discovery-driven sources (10 subreddits: r/googleanalytics, r/opensource, r/selfhosted, r/wordpress, r/bigsea, r/analytics, r/webdev, r/privacy, r/degoogle, r/gdpr) — added 6 market_anchors (GDPR, privacy, complexity, cookie consent) and thresholds (market_relevance: 0.45, min_signal_ratio: 0.25); tuned clustering (nr_topics: 60, max_items: 25000)
 - [built] Arctic Shift historical volume validation completed for 2018 analytics subreddits — confirmed sufficient post/comment coverage for Plausible-era backtest period
-- [next] Execute Plausible backtest (GA privacy gap, Jan–Dec 2018); run Email control negative test (`backtest_email_control.yaml`); complete V1 validation suite (success: 2/3 positive in top 3 + zero false positives)
+- [next] Execute Plausible backtest (GA privacy gap, Jan–Dec 2018); run Email control negative test (`backtest_email_control.yaml`); complete engine validation suite (success: 2/3 positive in top 3 + zero false positives)
 
 ## 2026-02-23 · Session 20
 
 - [built] Exa discovery probes executed for Linear, Notion, and Plausible test cases — identified on-topic subreddits (r/jira, r/projectmanagement for Linear; r/Evernote, r/notetaking for Notion) with rich signal density; Plausible probe created and staged for execution
 - [built] Arctic Shift historical volume validators run for 2018-2019 (Linear) and 2017-2018 (Notion) periods — confirmed sufficient post/comment counts to source backtests; volume validation scripts created for ongoing use
 - [built] `backtest_linear.yaml` and `backtest_notion.yaml` updated with discovery-driven source lists and refined HDBSCAN parameters (`min_cluster_size=15, min_samples=5`) — configs ready for re-validation cycles
-- [next] Execute Plausible discovery probe for GA privacy case (2018 data); run Arctic Shift volumes for 2018 analytics subreddits; update `backtest_plausible.yaml` and `backtest_email_control.yaml` with sources; complete V1 validation suite (Notion + Plausible + Email negative control)
+- [next] Execute Plausible discovery probe for GA privacy case (2018 data); run Arctic Shift volumes for 2018 analytics subreddits; update `backtest_plausible.yaml` and `backtest_email_control.yaml` with sources; complete engine validation suite (Notion + Plausible + Email negative control)
 
 ## 2026-02-23 · Session 19
 
 - [built] Discovery scripts created (`exa_discovery_probe.py`, `exa_discovery_probe_reddit.py`, `exa_discovery_notion.py`, `arctic_shift_volume_check.py`) — probes executed for Linear (2018-2019) and Notion (2017-2018) test cases; Evernote signals identified in r/Evernote, r/notetaking communities
 - [built] Configuration files updated (`backtest_linear.yaml`, `backtest_notion.yaml`) with discovery-driven source selection and refined HDBSCAN parameters for test case validation
 - [broke] API authentication error (400): "This authentication style is incompatible with the long context beta header" — halts session before Notion/Plausible/Email control backtest execution can resume
-- [broke] VADER sentiment fixes and remaining validation cases blocked — cannot complete V1 suite until auth resolved
+- [broke] VADER sentiment fixes and remaining validation cases blocked — cannot complete engine suite until auth resolved
 - [next] Fix Claude SDK authentication + long context beta compatibility; re-run Notion backtest; execute Plausible (GA privacy) and Email negative control tests to complete validation suite (success: 2/3 positive in top 3, zero false positives)
 
 ## 2026-02-23 · Session 18
 
 - [broke] API authentication error (400 invalid_request_error): "This authentication style is incompatible with the long context beta header" — session halted before any work completed; suggests conflict between current auth method and SDK long context mode
-- [broke] Session 17 continuation goal (VADER sentiment fixes + Plausible/Email control backtests) blocked — cannot proceed to remaining V1 validation cases until auth resolved
+- [broke] Session 17 continuation goal (VADER sentiment fixes + Plausible/Email control backtests) blocked — cannot proceed to remaining engine validation cases until auth resolved
 - [next] Check Claude SDK authentication setup and long context beta compatibility; verify API credentials and client initialization; disable long context mode if needed; retry VADER fixes and remaining backtest validation suite
 
 ## 2026-02-22 · Session 17
@@ -82,14 +82,14 @@
 - [built] Linear and Notion backtests both complete with target gaps ranked #1: Linear (Jira workflow, gap_score=0.7051) and Notion (Evernote frustration, gap_score=0.6464) — validates discovery-driven source selection and full 6-stage pipeline architecture across two positive validation cases
 - [built] Corpus composition analysis reveals Notion clustering weaker than Linear due to source diversity: r/evernote single-product subreddit vs. Linear spread across 10 communities (jira, projectmanagement, experienceddevs, etc.) — affects source strategy for future backtests
 - [broke] VADER sentiment intensity preprocessing remains inadequate: yields 0.29–0.36 scores vs. expected 0.7+ for high-pain signals — negation handling and domain-specific lexicon tuning required to improve gap_score discrimination in pain component
-- [next] Apply VADER fixes (negation handling, domain tuning); re-validate Notion backtest; execute Plausible (GA privacy gap, Jan–Dec 2018) and Email negative control backtests to complete V1 validation suite (success: 2/3 positive in top 3, zero false positives)
+- [next] Apply VADER fixes (negation handling, domain tuning); re-validate Notion backtest; execute Plausible (GA privacy gap, Jan–Dec 2018) and Email negative control backtests to complete engine validation suite (success: 2/3 positive in top 3, zero false positives)
 
 ## 2026-02-21 · Session 16
 
 - [built] Both Linear (Jira workflow gap, gap_score=0.705) and Notion (Evernote frustration cluster, gap_score=0.646) backtests complete: targets rank #1 in both cases — validates stages 1–5 pipeline architecture and discovery-driven source selection (Exa probes successfully identify on-topic communities)
 - [built] Arctic Shift historical data volumes verified for 2018-2019 (Linear era, r/jira+related subreddits) and 2017-2018 (Notion era, r/Evernote+r/notetaking); market relevance gates filter noise effectively (zero off-topic gaps in Notion run vs. multiple dev-culture noise in Linear)
 - [broke] VADER sentiment intensity scoring yields overly broad pain_intensity values (0.29–0.36 vs. expected 0.7+ for high-pain signals); limits discrimination in gap_score formula's 15% pain weight component
-- [next] Fix VADER sentiment preprocessing (negation handling, domain-specific lexicon tuning); re-validate Notion backtest to confirm improvement; execute Plausible backtest (GA privacy gap, Jan 2018–Dec 2018) and Email negative control; complete V1 validation suite (2/3 positive + negative control)
+- [next] Fix VADER sentiment preprocessing (negation handling, domain-specific lexicon tuning); re-validate Notion backtest to confirm improvement; execute Plausible backtest (GA privacy gap, Jan 2018–Dec 2018) and Email negative control; complete engine validation suite (2/3 positive + negative control)
 
 ## 2026-02-21 · Session 15
 

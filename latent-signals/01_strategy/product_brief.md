@@ -2,7 +2,7 @@
 
 # Latent Signals — Product Brief
 
-**Status:** Active — v1 validated
+**Status:** Active — Engine validated
 **Last updated:** February 26, 2026
 
 ---

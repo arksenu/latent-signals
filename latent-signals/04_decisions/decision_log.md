@@ -138,11 +138,11 @@ Running log of key architectural and strategic decisions. Each entry records con
 
 ## 2026-02-26 — Opportunity Scale Classifier deferred to v2
 
-**Context**: The v1 backtest validation revealed that the scoring formula treats all frustration equally regardless of opportunity magnitude. Three-tier classification (new-product-scale / feature-scale / polish-scale) was designed during brainstorming to address this.
+**Context**: The engine backtest validation revealed that the scoring formula treats all frustration equally regardless of opportunity magnitude. Three-tier classification (new-product-scale / feature-scale / polish-scale) was designed during brainstorming to address this.
 
-**Decision**: Defer the full Opportunity Scale Classifier to v2. As a v1.1 incremental step, compute a pain-to-question ratio from existing zero-shot classification data to test whether derived quantitative signals can separate opportunity magnitudes without an LLM classifier.
+**Decision**: Defer the full Opportunity Scale Classifier to v2. As an incremental step, compute a pain-to-question ratio from existing zero-shot classification data to test whether derived quantitative signals can separate opportunity magnitudes without an LLM classifier.
 
-**Rationale**: Brainstorming surfaced that opportunity scale may be partially an emergent property of existing signals rather than purely a classification problem. Three derived signals — gap age (temporal persistence of complaints), pain-to-question ratio (switching intent vs. help-seeking), and incumbent feature coverage completeness — may separate the easy cases cheaply. The LLM classifier would then only resolve ambiguous cases where derived signals disagree. Testing derived signals first (v1.1) determines whether the LLM classifier adds enough marginal value to justify schema complexity (v2).
+**Rationale**: Brainstorming surfaced that opportunity scale may be partially an emergent property of existing signals rather than purely a classification problem. Three derived signals — gap age (temporal persistence of complaints), pain-to-question ratio (switching intent vs. help-seeking), and incumbent feature coverage completeness — may separate the easy cases cheaply. The LLM classifier would then only resolve ambiguous cases where derived signals disagree. Testing derived signals first determines whether the LLM classifier adds enough marginal value to justify schema complexity (v2).
 
 **Design (v2, when implemented)**:
 - Three tiers: new-product (incumbent can't fix), feature (incumbent hasn't fixed), polish (incumbent will fix)
@@ -152,7 +152,7 @@ Running log of key architectural and strategic decisions. Each entry records con
 
 **Alternatives considered**: (a) Implement full LLM classifier immediately (premature — derived signals may suffice for easy cases); (b) Skip classification entirely and let users manually interpret reports (acceptable for prototype but not for production); (c) Use gap_score threshold alone to separate magnitudes (doesn't work — VS Code 0.740 vs Linear 0.723 overlap).
 
-**Status**: Active. v1.1 pain-to-question ratio analysis completed — signal absent (see 2026-02-27 entry). LLM classifier remains the v2 path.
+**Status**: Active. Pain-to-question ratio analysis completed — signal absent (see 2026-02-27 entry). LLM classifier remains the v2 path.
 
 ---
 
@@ -178,7 +178,7 @@ Running log of key architectural and strategic decisions. Each entry records con
 
 **Alternatives rejected**: (a) Feature-request ratio instead of pain-to-question (same problem — classifier responds to language style not magnitude); (b) Combined ratio with praise normalization (adds complexity without addressing the structural issue); (c) Confidence-weighted ratios (the classifier confidence tracks language clarity, not category correctness).
 
-**Status**: Closed. Pain-to-question ratio is not a viable magnitude signal. The v2 Opportunity Scale Classifier (LLM-based rhetorical framing analysis) remains the correct path. Remaining derived signal candidates for v1.1: gap age (temporal persistence) and incumbent feature coverage completeness.
+**Status**: Closed. Pain-to-question ratio is not a viable magnitude signal. The v2 Opportunity Scale Classifier (LLM-based rhetorical framing analysis) remains the correct path. Remaining derived signal candidates: gap age (temporal persistence) and incumbent feature coverage completeness.
 
 ---
 

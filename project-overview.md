@@ -20,7 +20,7 @@ Latent Signals is a B2B competitive intelligence tool that detects underserved m
 
 The pipeline processes 5,000-30,000 community posts through six sequential stages: data collection (Exa, Serper, Apify, Arctic Shift, HN Algolia), preprocessing (HTML cleanup, language detection, MinHash dedup), embedding (sentence-transformers), topic clustering (BERTopic + UMAP + HDBSCAN), classification (VADER sentiment + zero-shot + GPT-4o-mini extraction), and gap scoring (ChromaDB vector similarity + composite formula).
 
-**Current status (2026-02-27):** V1 validated, backtest gate passed. All 5 backtest cases complete (3 positive + 2 controls). Pipeline reliably detects genuine market gaps. Known limitation: scoring formula treats all frustration equally regardless of opportunity magnitude (deferred to v2 Opportunity Scale Classifier).
+**Current status (2026-02-27):** Engine validated, backtest gate passed. All 5 backtest cases complete (3 positive + 2 controls). Pipeline reliably detects genuine market gaps. Known limitation: scoring formula treats all frustration equally regardless of opportunity magnitude (deferred to v2 Opportunity Scale Classifier).
 
 ## Technology Stack
 
