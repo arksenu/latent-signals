@@ -152,4 +152,48 @@ Running log of key architectural and strategic decisions. Each entry records con
 
 **Alternatives considered**: (a) Implement full LLM classifier immediately (premature — derived signals may suffice for easy cases); (b) Skip classification entirely and let users manually interpret reports (acceptable for prototype but not for production); (c) Use gap_score threshold alone to separate magnitudes (doesn't work — VS Code 0.740 vs Linear 0.723 overlap).
 
-**Status**: Active. v1.1 pain-to-question ratio analysis is the next development task.
+**Status**: Active. v1.1 pain-to-question ratio analysis completed — signal absent (see 2026-02-27 entry). LLM classifier remains the v2 path.
+
+---
+
+## 2026-02-27 — Pain-to-question ratio does not separate opportunity magnitudes
+
+**Context**: The v1 zero-shot classifier labels every post as pain_point, feature_request, praise, question, or bug_report. The hypothesis was that the ratio of pain_point posts to question posts per cluster would naturally separate opportunity magnitudes — new-product-scale gaps (where users express frustration about fundamental limitations) would show higher pain-to-question ratios than polish-scale gaps (where users ask setup/config questions).
+
+**Method**: For each of 7 target clusters across 3 backtest runs (Linear, Notion, VS Code), joined `classified.jsonl` (per-post labels) with `topic_assignments.jsonl` (per-post cluster membership). Computed pain_ratio, question_ratio, and P2Q = pain/question per cluster. Verified data integrity: sum(label_counts) == n_posts for all 7 clusters, p2q == (pain/n)/(question/n) for all 7 clusters, 0 missing labels, random text samples confirmed label plausibility.
+
+**Results**:
+
+| Group | Clusters | Individual P2Qs | Weighted P2Q | Unweighted Mean |
+|-------|----------|----------------|-------------|----------------|
+| New-product-scale (Linear #2, Notion #2) | 2 | 0.55, 1.08 | 0.889 | 0.814 |
+| Polish-scale (VS Code top 3) | 3 | 0.74, 1.33, 0.58 | 0.796 | 0.887 |
+| Ambiguous (Linear #1, Notion #1) | 2 | 0.92, 0.64 | 0.770 | 0.779 |
+
+**Decision**: Do not integrate pain-to-question ratio into the scoring formula. The signal is absent — all three groups land in the 0.77–0.89 band regardless of aggregation method. Within-group variance exceeds between-group difference.
+
+**Key observation — the CMake/Jira inversion**: The CMake compiler cluster (polish-scale) has P2Q=1.33 — the highest of all 7 clusters. The Jira workflow cluster (new-product-scale) has P2Q=0.55 — among the lowest. This is the exact opposite of the hypothesis. The reason: the VADER-driven zero-shot classifier responds to emotional temperature of language, not opportunity magnitude. CMake posts use intense frustration language ("I cannot for the life of me get my files to link") while Jira posts use measured help-seeking language ("how do I configure workflows for my team"). The magnitude distinction exists in the posts but manifests as resolution-expectation framing, not emotional intensity. This is exactly what the v2 Opportunity Scale Classifier — operating on rhetorical framing rather than sentiment intensity — is designed to detect.
+
+**Why "adjust the threshold" won't work**: The CMake/Jira inversion is structural, not a calibration issue. Any threshold that captures Jira workflow (0.55) also captures every VS Code cluster. Any threshold that excludes VS Code CMake (1.33) also excludes the Notion OneNote cluster (1.08). The distributions overlap completely.
+
+**Alternatives rejected**: (a) Feature-request ratio instead of pain-to-question (same problem — classifier responds to language style not magnitude); (b) Combined ratio with praise normalization (adds complexity without addressing the structural issue); (c) Confidence-weighted ratios (the classifier confidence tracks language clarity, not category correctness).
+
+**Status**: Closed. Pain-to-question ratio is not a viable magnitude signal. The v2 Opportunity Scale Classifier (LLM-based rhetorical framing analysis) remains the correct path. Remaining derived signal candidates for v1.1: gap age (temporal persistence) and incumbent feature coverage completeness.
+
+---
+
+## 2026-02-27 — Notion backtest cluster misidentification: gap #2 is OneNote, not Evernote
+
+**Context**: The Notion backtest (run `b4612a0d`) was designed to validate detection of "Evernote frustration → Notion" as a market gap. The backtest summary recorded gap #2 "onenote notebook onedrive notebooks" (0.730) as the target signal and declared it a PASS at rank 2.
+
+**Finding**: Audit of cluster content reveals gap #2 is overwhelmingly **OneNote frustration**, not Evernote frustration:
+- Gap #2 "onenote notebook onedrive notebooks" (n=541): 443 posts mention OneNote, 11 mention Evernote
+- Gap #3 "evernote notes security token" (n=477): 343 posts mention Evernote, 21 mention OneNote
+
+The actual Evernote frustration cluster is gap #3 (0.657), not gap #2 (0.730). The topic label "onenote notebook onedrive notebooks" was a visible indicator that should have been caught during report analysis.
+
+**Impact on backtest validity**: The Notion backtest still passes — the Evernote cluster at rank 3 (0.657) is within the top-3 success criterion. But the validated rank changes from 2 to 3, and the score changes from 0.730 to 0.657. The gap #2 cluster (OneNote frustration) is itself a legitimate gap — OneNote had real usability problems that note-taking alternatives addressed — but it is not the specific "Evernote → Notion" signal the backtest was designed to detect.
+
+**Corrective action**: Update backtest summary to reflect correct cluster identification. The Notion PASS stands at rank 3 (0.657) rather than rank 2 (0.730).
+
+**Status**: Corrected. No pipeline changes required — this was an analysis error, not a pipeline defect.

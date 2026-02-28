@@ -19,10 +19,12 @@ Three rounds of testing were completed. Round 1 identified scoring deficiencies.
 | Case | Market | Target Signal | Run ID | Best Result | Verdict |
 |------|--------|--------------|--------|-------------|---------|
 | Linear | Project management | Jira frustration → Linear | `7c16def9` | Rank 2 (0.723) | **PASS** |
-| Notion | Note-taking | Evernote frustration → Notion | `b4612a0d` | Rank 2 (0.730) | **PASS** |
+| Notion | Note-taking | Evernote frustration → Notion | `b4612a0d` | Rank 3 (0.657) | **PASS** |
 | Plausible | Web analytics | GA privacy frustration → Plausible | `0fb9aed4` | Ranks 1-2 (0.776, 0.745) | **PASS** |
 
 All three positive cases detected the known market gap in the top 3 ranked opportunities. Scores improved from round 1 to round 2 after applying scoring fixes.
+
+**Correction (2026-02-27):** Notion gap #2 "onenote notebook onedrive notebooks" (0.730) is OneNote frustration (443/541 posts mention OneNote), not Evernote frustration. The actual Evernote cluster is gap #3 "evernote notes security token" (0.657, 343/477 posts mention Evernote). Notion still passes at rank 3 (within top-3 criterion) but the validated score is 0.657, not 0.730. See decision log 2026-02-27.
 
 ### Control Cases (2/2 — Real Gaps Detected)
 
@@ -64,11 +66,11 @@ All four fixes improved positive case scores without breaking signal detection.
 | Case | Round 1 Rank | Round 1 Score | Round 2 Rank | Round 2 Score | Delta |
 |------|-------------|---------------|-------------|---------------|-------|
 | Linear | 1 | 0.705 | 2 | 0.723 | +0.018 score, -1 rank |
-| Notion | 1 | 0.646 | 2 | 0.730 | +0.084 score, -1 rank |
+| Notion | 1 | 0.646 | 3 | 0.657 | +0.011 score, -2 ranks (see 2026-02-27 correction) |
 | Plausible (gap 1) | 1 | 0.725 | 1 | 0.776 | +0.051 |
 | Plausible (gap 2) | 2 | 0.692 | 2 | 0.745 | +0.053 |
 
-Linear and Notion dropped one rank in round 2 because the scoring fixes surfaced legitimate clusters (sysadmin frustration in Linear, generic bugs in Notion) that now score correctly. Scores improved across the board.
+Linear dropped one rank in round 2 because the scoring fixes surfaced a legitimate sysadmin frustration cluster. Notion's Evernote cluster is at rank 3 (corrected 2026-02-27 — gap #2 is OneNote frustration, not Evernote; see decision log). Scores improved across the board.
 
 ### Round 1 Deficiencies (Final Status)
 
