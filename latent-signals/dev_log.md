@@ -4,6 +4,14 @@
      Format: 3–5 bullets per session, newest first.
      Tags: [built] | [broke] | [next] -->
 
+## 2026-02-28 · Session 28
+
+- [built] Critical reassessment: v1 engine validated but not feature-complete. Every backtest required manual input construction (Exa queries, subreddit lists, market anchors, competitor IDs, feature files). No automated input layer (Stage 0) exists. Product brief framing was wrong
+- [built] 6 decision log entries added: Stage 0 required, Exa passthrough (Decision 1), NER competitor extraction (Decision 2), dampened coverage gap scoring (Decision 3), two-tier gap taxonomy (Decision 4), branching scoring formula for satisfaction vs. coverage gaps
+- [built] Branching scoring formula designed: coverage pathway uses dampened `1 - max_similarity` with 0.8 floor; satisfaction pathway uses `sentiment_intensity * feature_similarity * (1 - satisfaction_quality)` where `satisfaction_quality = (positive_count + 1) / (positive_count + negative_count + 2)` (Laplace-smoothed). Thresholds pending label test
+- [built] TODO.md restructured around Stage 0 milestone with 3 parallel pre-implementation experiments (NER, zero-shot labels, scoring formula spec) and 0a/0b split
+- [next] Run NER experiment on 5 existing backtest corpora; run zero-shot label test (5 new labels on ~200 posts); sketch scoring formula with real numbers from Linear/Notion data. All three in parallel. Then build Stage 0
+
 ## 2026-02-27 · Session 27
 
 - [built] Pain-to-question ratio analysis completed across all 5 backtest cases — signal absent. All opportunity groups land in 0.77–0.89 P2Q band; CMake (polish) has P2Q=1.33 while Jira (new-product) has P2Q=0.55, inverted from hypothesis. Classifier responds to emotional temperature, not opportunity magnitude

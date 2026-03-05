@@ -186,11 +186,35 @@ def run(config: Config, run_id: str, cost_tracker: CostTracker) -> list[Classifi
                     classified[doc_id].llm_feature_requests = extraction.feature_requests
                     classified[doc_id].llm_urgency = extraction.urgency
                     classified[doc_id].llm_products_mentioned = extraction.products_mentioned
+                    if hasattr(extraction, "gap_type"):
+                        classified[doc_id].llm_gap_type = extraction.gap_type
 
             avg_tokens = sum(len(t.split()) * 1.3 for t in sampled_texts.values()) / max(len(sampled_texts), 1)
             estimated_cost = (avg_tokens * len(sampled_texts) / 1_000_000) * 0.075
             cost_tracker.add("openai", estimated_cost)
             log.info("stage5.llm_complete", extracted=len(extractions), estimated_cost=f"${estimated_cost:.4f}")
+
+    # Step 6: NER entity extraction (product/company names for branching trigger)
+    # Uses en_core_web_lg (fast, sufficient for product names) on all docs.
+    try:
+        import spacy
+        nlp = spacy.load("en_core_web_lg", disable=["parser", "lemmatizer", "textcat"])
+        log.info("stage5.ner_starting", n_docs=len(docs))
+        ner_entity_types = {"ORG", "PRODUCT"}
+        for doc_batch in _batch_iter(docs, batch_size=500):
+            texts_for_ner = [d.text[:1000] for d in doc_batch]  # Cap text length for speed
+            for spacy_doc, orig_doc in zip(nlp.pipe(texts_for_ner, batch_size=64), doc_batch):
+                entities = [
+                    {"text": ent.text, "label": ent.label_}
+                    for ent in spacy_doc.ents
+                    if ent.label_ in ner_entity_types
+                ]
+                if entities and orig_doc.id in classified:
+                    classified[orig_doc.id].entities = entities
+        n_with_entities = sum(1 for c in classified.values() if c.entities)
+        log.info("stage5.ner_complete", docs_with_entities=n_with_entities)
+    except (ImportError, OSError) as e:
+        log.warning("stage5.ner_skipped", reason=str(e))
 
     # Write output
     classified_list = list(classified.values())
@@ -212,3 +236,9 @@ def _count_categories(docs: list[ClassifiedDocument]) -> dict[str, int]:
     for d in docs:
         counts[d.category] = counts.get(d.category, 0) + 1
     return counts
+
+
+def _batch_iter(items: list, batch_size: int = 500):
+    """Yield successive batches from items list."""
+    for i in range(0, len(items), batch_size):
+        yield items[i : i + batch_size]

@@ -27,7 +27,6 @@ from latent_signals.stage6_scoring.normalization import (
     normalize_market_size,
     normalize_pain_intensity,
     normalize_trend_slope,
-    normalize_unaddressedness,
 )
 from latent_signals.utils.logging import get_logger
 
@@ -140,7 +139,7 @@ def score_gaps(
                     )
                     continue
 
-        # Component 1: Unaddressedness
+        # Component 1: Unaddressedness (with additive dissatisfaction boost)
         max_sim = compute_max_similarity(centroid, feature_embeddings)
 
         # Unaddressedness floor: clusters with max_sim below this threshold are
@@ -156,7 +155,35 @@ def score_gaps(
             )
             continue
 
-        unaddressedness = normalize_unaddressedness(max_sim)
+        # Collect all classified docs in this cluster once (reused below).
+        cluster_docs = [classified_map[d] for d in dids if d in classified_map]
+
+        # Dissatisfaction ratio: Laplace-smoothed VADER polarity counts.
+        # Positive: compound >= 0.05, Negative: compound <= -0.05.
+        # Result is in (0, 1); 0.5 when no polarized docs.
+        n_pos = sum(1 for c in cluster_docs if c.vader_compound >= 0.05)
+        n_neg = sum(1 for c in cluster_docs if c.vader_compound <= -0.05)
+        dissatisfaction_ratio = (n_neg + 1) / (n_pos + n_neg + 2)
+
+        # NER entity count: how many docs in this cluster mention product/company names.
+        # Used to distinguish coverage gaps (no product mentions → unaddressed need)
+        # from satisfaction gaps (product mentioned → complaint about existing product).
+        n_ner_mentions = sum(
+            1 for c in cluster_docs if c.entities and len(c.entities) > 0
+        )
+        is_coverage_gap = n_ner_mentions < max(3, len(cluster_docs) * 0.05)
+
+        # Additive boost: always-on, no branching trigger.
+        # High similarity + high dissatisfaction → large boost (satisfaction gap).
+        # Low similarity → small boost (coverage gap, unaddressedness already high).
+        base_unaddressedness = 1.0 - max_sim
+        unaddressedness = min(1.0, base_unaddressedness + max_sim * dissatisfaction_ratio)
+
+        # Coverage gap floor: clusters with zero/few NER product mentions describe
+        # needs that no incumbent addresses. Apply 0.8 floor on unaddressedness,
+        # scaled by sentiment intensity so only frustrated coverage gaps score high.
+        if is_coverage_gap:
+            unaddressedness = max(0.8, unaddressedness)
 
         # Component 2: Frequency (capped at p95 to limit mega-cluster inflation)
         capped_count = min(len(dids), frequency_cap)
@@ -165,8 +192,7 @@ def score_gaps(
         # Component 3: Pain intensity
         # Use the top-N most negative VADER scores instead of cluster mean.
         # Averaging across all docs dilutes strong frustration signals to ~0.00.
-        pain_docs = [classified_map[d] for d in dids if d in classified_map]
-        pain_sentiments = [c.vader_compound for c in pain_docs if c.category in ("pain_point", "bug_report")]
+        pain_sentiments = [c.vader_compound for c in cluster_docs if c.category in ("pain_point", "bug_report")]
         if pain_sentiments:
             pain_sentiments_sorted = sorted(pain_sentiments)  # most negative first
             top_n_pain = pain_sentiments_sorted[:20]
@@ -220,6 +246,10 @@ def score_gaps(
                 gap_score=round(gap_score, 4),
                 score_breakdown={
                     "unaddressedness": round(unaddressedness, 4),
+                    "unaddressedness_base": round(base_unaddressedness, 4),
+                    "dissatisfaction_ratio": round(dissatisfaction_ratio, 4),
+                    "is_coverage_gap": is_coverage_gap,
+                    "ner_mention_count": n_ner_mentions,
                     "frequency": round(frequency, 4),
                     "pain_intensity": round(pain_intensity, 4),
                     "competitive_whitespace": round(comp_whitespace, 4),

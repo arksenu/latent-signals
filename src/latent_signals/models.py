@@ -102,6 +102,7 @@ class ClassifiedDocument(BaseModel):
     llm_feature_requests: list[str] | None = None
     llm_urgency: float | None = None
     llm_products_mentioned: list[str] | None = None
+    llm_gap_type: str | None = None
     # Keyphrase / NER
     keyphrases: list[str] | None = None
     entities: list[dict[str, str]] | None = None

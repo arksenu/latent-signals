@@ -59,32 +59,32 @@ The report provides enough evidentiary depth to directly inform a go/no-go inves
 
 ## Two Jobs to Be Done
 
-Latent Signals serves two distinct use cases for startups:
+Latent Signals serves two use cases that share the same pipeline — only the input context differs:
 
-**Job 1 — Discovery:** "I'm entering a market. What underserved problems exist?" The user defines a market category or domain. The tool scrapes community discussions, extracts and clusters unmet needs, maps them against competitor coverage, scores the gaps, and delivers a ranked opportunity index. This is the primary use case and the one implemented in v1.
+**Job 2 — Competitive Gap Intelligence (primary):** "I have an existing product. What gaps exist in my market?" The user provides rich context about their company, product, competitors, and market. The tool scrapes community discussions, extracts and clusters unmet needs, maps them against competitor feature coverage, and surfaces actionable gaps — new features to build, competitor weaknesses to exploit, unaddressed needs to fill. This is the primary use case: a PM at a B2B SaaS company replaces 5-10 hours/quarter of manual competitive research with an automated, scored gap report. Recurring use case (quarterly roadmap planning, monthly competitive monitoring).
 
-**Job 2 — Expansion:** "I have an existing product. Where should I expand?" The user inputs their own product. The tool analyzes their users' sentiment alongside the broader market, identifies needs their product and competitors both fail to address, and surfaces expansion opportunities ranked by gap score. This is the higher-retention use case — it gives paying customers a reason to return monthly as the market evolves. Deferred to v2.
+**Job 1 — Market Discovery (simpler variant):** "I'm entering a market. What underserved problems exist?" The user provides a market description with less company-specific context. Same pipeline, same output — just a sparser input. Falls out for free from the Job 2 implementation.
 
 ---
 
 ## V1 Scope
 
-V1 is a working prototype that takes a market category as input and produces a scored gap report as output.
+V1 is a working prototype that takes rich text input (company/product/market description) and produces a scored gap report.
 
 **V1 includes:**
 
-- Single user flow: input-based discovery (user defines a market/domain, tool finds gaps)
-- Data ingestion: Exa (semantic search) + Serper.dev (keyword search) + Apify (bulk Reddit scraping)
-- NLP pipeline: BERTopic clustering + VADER sentiment + zero-shot classification + GPT-4o-mini batch extraction on sampled clusters
+- Input automation (Stage 0): User describes company/market in plain text → Exa discovery → source validation → anchor generation → competitor extraction via Exa Answer → full pipeline config constructed automatically
+- Data ingestion: Arctic Shift (Reddit) + HN API, sourced from Stage 0 discovery
+- NLP pipeline: BERTopic clustering + VADER sentiment + zero-shot classification + GPT-4o-mini batch extraction on sampled clusters + spaCy NER for entity counting
 - Vector storage: ChromaDB (embedded, zero infrastructure)
-- Gap detection: cosine similarity threshold logic in application layer
-- Scoring: full composite gap_score formula implemented
-- Output: static report (Markdown or PDF), not an interactive dashboard
-- Orchestration: sequential Python script
+- Gap detection: cosine similarity with additive dissatisfaction boost + coverage gap floor
+- Scoring: composite gap_score with 6 weighted components
+- Output: static report (Markdown), not an interactive dashboard
+- Orchestration: sequential Python script (`run_query.py`)
 
 **V1 explicitly defers:**
 
-- Job 2 (existing product analysis / expansion opportunities)
+- Input enrichment layer (website scraping, document upload — convenience on top of Stage 0, not pipeline changes)
 - Qdrant migration and native Discovery API for dissimilarity search
 - Prefect or any workflow orchestration
 - Web UI or interactive dashboard
@@ -93,7 +93,7 @@ V1 is a working prototype that takes a market category as input and produces a s
 - Multi-tenant SaaS infrastructure and billing
 - User authentication or access control
 
-V1 is feature-complete and validated. The pipeline produces directionally correct, useful output — it retroactively identified the market gaps that Linear, Notion, and Plausible Analytics exploited, ranking the target signal in the top 3 in all cases. V1 answers the question: "Does this approach work at all?" The answer is yes.
+The engine (stages 1-6) is validated: it retroactively identified the market gaps that Linear, Notion, and Plausible Analytics exploited, ranking the target signal in the top 3 in all cases. Stage 0 (automated input construction) is built but not yet validated against backtest baselines.
 
 ---
 

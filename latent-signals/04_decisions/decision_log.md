@@ -197,3 +197,146 @@ The actual Evernote frustration cluster is gap #3 (0.657), not gap #2 (0.730). T
 **Corrective action**: Update backtest summary to reflect correct cluster identification. The Notion PASS stands at rank 3 (0.657) rather than rank 2 (0.730).
 
 **Status**: Corrected. No pipeline changes required — this was an analysis error, not a pipeline defect.
+
+---
+
+## 2026-02-28 — Engine validated, not yet a usable prototype; Stage 0 required for V1
+
+**Context**: Project documentation described the pipeline as "V1 feature-complete and validated." Review revealed that every backtest required a human to manually construct all pipeline inputs: hand-written Exa discovery queries, manually curated subreddit lists, hand-authored market anchor statements, manually identified competitors, and hand-written competitor feature files. No automated input construction layer exists. The engine works, but V1 — defined as a working prototype where a user types a query and gets a gap report — is not yet built.
+
+**Decision**: The engine (stages 1-6) is validated but is pre-V1 work. V1 = Stage 0 (automated input layer) + engine (stages 1-6) working together as a complete user-facing workflow. Stage 0 is the next engineering milestone.
+
+**Rationale**: The label "V1 is feature-complete" conflated engine validation with product readiness. `run_pipeline.py` expects a fully constructed Config object — no input construction logic exists. A user cannot type "project management" and get a gap report without performing all five manual steps the developer performed during backtesting.
+
+**Impact**: Product brief requires structural rewrite. README deferred. CLAUDE.md requires Stage 0 section. All documentation written under the "feature-complete" framing needs correction.
+
+**Status**: Active. V1 = Stage 0 + engine. Stage 0 is the current milestone.
+
+---
+
+## 2026-02-28 — User input is the Exa query and primary market anchor (Decision 1)
+
+**Context**: Stage 0 requires turning a user's plain language input into structured pipeline inputs. The question was whether an LLM should transform the user's input into optimized Exa queries and market anchor statements.
+
+**Decision**: No LLM intermediary. The user's plain text description goes directly into Exa as the search query. The same string, embedded, becomes the primary market anchor for the post-level relevance filter. Supplementary anchors are automatically extracted from top recurring phrases in Exa results — this is non-optional.
+
+**Rationale**: Exa is a semantic search engine — its entire value proposition is resolving intent from natural language. Adding an LLM query generation step would add latency, cost, and a failure mode for zero benefit. The discovery probes during backtesting already proved that Exa returns better sources from natural language input than hand-crafted keyword queries. Supplementary anchor extraction is non-optional because a single user string is too narrow a relevance boundary — in the Plausible case, "privacy-focused web analytics" would miss posts about "GDPR cookie consent" or "Google tracking."
+
+**Alternatives rejected**: LLM-mediated query generation (unnecessary complexity, Exa already handles semantic resolution), single-anchor-only mode (too narrow, demonstrated during backtest iterations).
+
+**Status**: Active.
+
+---
+
+## 2026-02-28 — Competitors extracted from scraped data via NER + Exa feature search (Decision 2)
+
+**Context**: The original architecture required competitor features BEFORE the pipeline could run, because unaddressedness (30% weight) and competitor_coverage_ratio (15% weight) depend on them. This forced manual competitor identification and manual feature file authoring for every run.
+
+**Decision**: Competitors are extracted from the scraped corpus using spaCy NER, filtered by frequency threshold. For each identified competitor, Exa search ("[competitor name] features") + GPT-4o-mini structured extraction produces the feature set. Competitor feature profiles are cached (keyed by normalized company name + staleness TTL of 30-90 days). Market-level source maps are also cached for repeat queries.
+
+**Rationale**: Forum posts name the products they're complaining about. NER extraction + frequency filtering identifies the actual competitors in a market. Exa feature search is more robust than direct marketing page scraping because it abstracts away HTML structure variation. Caching saves money and latency on repeat queries for the same market.
+
+**Risk**: spaCy NER accuracy on informal text (abbreviations, misspellings, context-dependent references). Mitigated by: frequency thresholding, prototype validation on existing 5 backtest corpora before building extraction pipeline.
+
+**NER experiment success criteria**: (1) Known competitors appear in top 5 entities by frequency in their respective corpora. (2) Identify the minimum frequency cutoff that captures all known competitors — this becomes a pipeline parameter. (3) Full frequency distribution (positions 1-20+) examined for natural cliff vs. long tail, which determines whether frequency alone is sufficient or a post-NER filter is needed.
+
+**Alternatives rejected**: G2 scraping (anti-scraping protections, fragile HTML parsing), manual competitor identification (doesn't scale, blocks automation), user-provided competitor lists (acceptable as optional input, not required).
+
+**Status**: Active. NER experiment must pass before building extraction pipeline.
+
+---
+
+## 2026-02-28 — Coverage gap scoring uses dampened floor, not automatic max (Decision 3)
+
+**Context**: Two cluster types emerge naturally: satisfaction gaps (posts mention specific products with complaints) and coverage gaps (posts express frustration with no product referenced). The question was how to score coverage gaps where no competitor features exist to compare against.
+
+**Initial proposal**: Default unaddressedness to 1.0 for coverage gaps (nothing to compare against = maximally unaddressed).
+
+**Decision**: Dampened approach. Coverage gaps receive 0.8 floor on unaddressedness, scaled by sentiment intensity, gated by relevance filter + minimum frequency threshold. Not an automatic 1.0.
+
+**Rationale**: Automatic 1.0 creates systematic false positive bias. Many clusters with zero product mentions are generic discussion, vague wishes, or off-topic content that passed the relevance filter. The backtest history showed the relevance filter is imperfect — CORS/Terraform/CAPM clusters slipped through in early runs. Combining an imperfect filter with automatic max scoring on the heaviest-weighted component (30%) would push noise clusters into the top 3. The dampened approach lets frequency, sentiment intensity, and trend direction separate real unaddressed needs from noise.
+
+**Alternatives rejected**: Automatic 1.0 with relevance gate only (relevance filter has demonstrated false pass-through), no special treatment (would score coverage gaps at whatever cosine distance produces, which is undefined when there are no feature vectors to compare against).
+
+**Status**: Active.
+
+---
+
+## 2026-02-28 — Two-tier gap taxonomy replaces current zero-shot labels (Decision 4)
+
+**Context**: The current zero-shot classifier uses 5 labels (pain_point, feature_request, praise, question, bug_report). These describe what a post IS, not what kind of gap it signals. All of "battery drain", "no API", "paywall for basic features", and "looking for alternatives" flatten to "pain_point." The pipeline needs labels that map to gap-relevant categories.
+
+**Decision**: Two-tier classification system.
+
+**Tier 1 (zero-shot, runs on all posts, zero cost increase):** 5 labels redesigned for gap relevance and maximum semantic distance: `complaint` (product is bad at something), `unmet_need` (nothing exists to solve this), `switching` (looking for alternatives), `friction` (setup/config/onboarding pain signal), `praise` (positive, inverse indicator). bart-large-mnli handles 5 semantically distant labels reliably.
+
+**Tier 2 (GPT-4o-mini structured extraction, runs on sampled clusters only, zero cost increase):** Add `gap_type` field to existing Pydantic schema with full granular taxonomy (workflow friction, capability limitation, reliability failure, performance constraint, integration gap, economic barrier, trust deficit, regulatory friction, customization deficit, switching intent, etc.). One additional field in an existing API call.
+
+**Key insight**: Tier-1 label distributions per cluster serve as an opportunity magnitude proxy. A cluster with high `switching` + high `complaint` = new product opportunity. A cluster with high `friction` + high `complaint` = incumbent can fix it. This partially collapses the v2 Opportunity Scale Classifier into existing infrastructure without a separate classification step.
+
+**Implementation constraint**: Do NOT attempt >8 labels in zero-shot. Accuracy degrades as label count increases and semantic overlap grows. The two-tier split exists specifically because each tool handles a different granularity level.
+
+**Zero-shot label test success criteria**: Run 5 new labels on ~200 posts from existing classified corpora. Labels must produce clean separations with minimal bleed — specifically check `complaint` vs. `friction` overlap and whether `switching` posts scatter across multiple labels.
+
+**Alternatives considered**: (a) 8-10 zero-shot labels (at edge of bart-large-mnli reliability, test first); (b) Keyword/pattern heuristics for tier 1 (catches 40-60% of posts, useful as supplement on cluster samples, not replacement); (c) DeBERTa-v3-large for zero-shot (better accuracy at higher label counts, 3x slower — back-pocket option if 5 labels proves insufficient). Option (a) rejected for v1. Options (b) and (c) held as future enhancements.
+
+**Status**: Active. Label test must pass before implementation.
+
+---
+
+## 2026-02-28 — Branching scoring formula for satisfaction gaps vs. coverage gaps
+
+**Context**: The current gap_score formula uses `1 - max_similarity` for unaddressedness. This systematically suppresses satisfaction gaps — complaints about features an incumbent offers score LOW on unaddressedness because the complaint is semantically close to the feature description. The Linear backtest demonstrated this: "Jira is slow and bloated" embeds near "Jira sprint planning and velocity tracking" — producing high similarity and therefore low unaddressedness. The pipeline finds the gaps but ranks satisfaction gaps below coverage gaps by construction.
+
+**Decision**: Branching scoring formula driven by tier-1 label distributions per cluster.
+
+**Coverage gap pathway** (majority `unmet_need` in cluster): `unaddressedness = dampened (1 - max_similarity)` with 0.8 floor, gated by relevance filter + minimum frequency threshold.
+
+**Satisfaction gap pathway** (majority `complaint` + `switching` in cluster): `score = sentiment_intensity * feature_similarity * (1 - satisfaction_quality)` where `satisfaction_quality = (positive_count + 1) / (positive_count + negative_count + 2)` (Laplace-smoothed). Only counts posts with clear polarity — neutral/off-topic posts excluded from the denominator.
+
+**Rationale**: Satisfaction gaps (incumbent has feature but implements it poorly) are the most common type of real market opportunity and the specific type Linear exploited. Without this branching formula, every automated report would systematically underrank "existing product is bad" opportunities relative to "nothing exists" opportunities. For startup users, "existing product is bad" is often MORE actionable (proven demand, known customer base, clear positioning).
+
+**Dependency**: Branching thresholds (what percentage of `complaint` + `switching` triggers the satisfaction pathway) cannot be locked until the tier-1 zero-shot label test shows whether labels separate cleanly. Formula structure is locked; thresholds finalized after label test.
+
+**Alternatives rejected**: Single unified formula for both gap types (structurally cannot handle satisfaction gaps — cosine distance is the wrong metric when the complaint is about execution quality, not feature absence), separate LLM classification of gap type (unnecessary — tier-1 label distributions already provide the branching signal).
+
+**Status**: Superseded by VADER+NER branching decision (2026-02-28). The tier-1 label-based branching trigger failed — see below. Formula structure revised to additive boost. Coverage gap floor retained.
+
+---
+
+## 2026-02-28 — Zero-shot label test failed; pivot to VADER+NER branching
+
+**Context**: The branching scorer (Decision 5) was designed to use tier-1 zero-shot label distributions per cluster to determine coverage gap vs satisfaction gap pathway. Three separate zero-shot label tests were run with different phrasings. All three failed: BART always has one label absorb 65-87% of posts regardless of phrasing.
+
+- v1 labels ("complaint about a product", etc.): "switching" absorbed 64.7%
+- v2 hypothesis-style ("This post complains about..."): "praise" absorbed 87%
+- v2 short-style ("product complaint or criticism"): "unmet_need" absorbed 75%
+
+**Decision**: Drop tier-1 zero-shot labels from the branching logic entirely. Use VADER sentiment polarity + NER entity frequency per cluster as the branching trigger instead.
+
+**Branching trigger**:
+- Clusters with significant product entity mentions (NER frequency above threshold) → **satisfaction gap pathway** (gets the additive boost: `min(1.0, (1-max_sim) + max_sim * dissatisfaction_ratio)`)
+- Clusters with zero/few product mentions → **coverage gap pathway** (0.8 floor on unaddressedness)
+- `dissatisfaction_ratio = (neg_count + 1) / (pos_count + neg_count + 2)` using VADER compound thresholds (>= 0.05 positive, <= -0.05 negative)
+
+**Scoring formula revision**: The originally proposed satisfaction gap replacement formula (`sentiment_intensity * feature_similarity * (1 - satisfaction_quality)`) produces values 10x too low — three factors all <1 multiply to near-zero. Replaced with an additive boost that is always-on for all clusters: `new_unaddressedness = min(1.0, (1 - max_sim) + max_sim * dissatisfaction_ratio)`. The boost scales correctly: high similarity + high dissatisfaction = large boost (satisfaction gap), low similarity = small boost (irrelevant). Coverage gap floor (0.8) still applies separately. See `latent-signals/02_requirements/scoring_formula_spec_v2.md` for full spec with real data.
+
+**Rationale**: VADER sentiment and NER entity counts are both proven reliable on our data (NER experiment passed, VADER is well-calibrated). Zero-shot labels added complexity and a failure mode for no benefit — the two signals we already have (sentiment polarity + product mentions) provide the same branching information. Tier-1 labels can be revisited later as a reporting enrichment layer, not a scoring input.
+
+**Alternatives rejected**: (a) Try DeBERTa model for zero-shot (burns another experiment cycle, uncertain payoff), (b) Accept BART limitations and use 2-3 labels only (loses the granularity that justified the redesign).
+
+**Status**: Active. Replaces Decision 4's tier-1 branching trigger and Decision 5's replacement formula.
+
+---
+
+## 2026-02-28 — Exa Answer for competitor+feature extraction (Stage 0b)
+
+**Context**: Stage 0b needs to identify competitors and extract their features automatically. The original plan was: NER on scraped corpus → identify competitors by frequency → Exa feature search per competitor → GPT-4o-mini structured extraction. Smoke testing Exa's Answer endpoint with a structured JSON schema showed it can return competitors + features in a single API call from the same user description used for discovery.
+
+**Decision**: Use Exa Answer with structured output schema for competitor identification and feature extraction. Single call replaces the NER→Exa→GPT-4o-mi chain for Stage 0b.
+
+**Rationale**: The product serves startups analyzing their current market — they want current competitors, not historical ones. Exa Answer returns current, web-grounded competitor data. NER on historical corpus is needed for backtesting but not for the primary use case. NER is still used per-cluster in the scoring pipeline (Phase 2) as the branching trigger for satisfaction vs coverage gaps — that's a different role (counting product mentions in complaint posts, not identifying competitors).
+
+**Alternatives rejected**: (a) Full NER→Exa→GPT-4o-mi pipeline (3 steps, more complex, slower, same result for current-market queries), (b) Exa Answer as fallback only (unnecessarily complex when it works as primary).
+
+**Status**: Active. Not yet implemented — Phase 3.
