@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--output-dir", default="data", help="Output directory (default: data)")
     parser.add_argument("--discovery-only", action="store_true", help="Run Stage 0 only (discovery + config), skip pipeline.")
     parser.add_argument("--stages", type=str, default=None, help="Pipeline stages to run (e.g., '1,2,3'). Default: all.")
+    parser.add_argument("--run-id", default=None, help="Reuse data from a previous run (skips Stage 0 + earlier stages).")
     args = parser.parse_args()
 
     # Check for Exa API key
@@ -49,130 +50,165 @@ def main():
     print(f"Query: \"{args.query}\"")
     print(f"{'=' * 60}\n")
 
-    # ── Stage 0: Input Construction ──────────────────────────────
-    print("Stage 0: Discovering sources and building config...")
-    t0 = time.time()
+    # ── Reuse previous run (--run-id) ───────────────────────────
+    if args.run_id:
+        print(f"Reusing data from previous run: {args.run_id}")
+        print(f"Skipping Stage 0 — using existing preprocessed/embedded/classified data.\n")
 
-    from latent_signals.stage0_input.exa_discovery import run_exa_discovery
-    from latent_signals.stage0_input.source_extraction import extract_and_validate_sources
-    from latent_signals.stage0_input.anchor_generation import generate_anchors
-    from latent_signals.stage0_input.config_builder import build_config
-    from latent_signals.stage0_input.source_cache import load_source_cache, save_source_cache
-    from latent_signals.stage0_input.competitor_discovery import discover_competitors, save_features_yaml
+        from latent_signals.stage0_input.config_builder import build_config
+        from latent_signals.stage0_input.source_cache import load_source_cache
+        from latent_signals.stage0_input.source_extraction import ValidatedSources
 
-    # Step 1: Competitor discovery (Exa Answer) — runs FIRST so competitor
-    # names can be used as search terms in the Exa discovery probes.
-    print("\n  [1/5] Discovering competitors and features...")
-    competitor_cache_dir = Path(args.output_dir) / "cache" / "competitors"
-    competitor_features = discover_competitors(
-        args.query,
-        os.environ["EXA_API_KEY"],
-        cache_dir=competitor_cache_dir,
-    )
+        # Load cached sources if available, otherwise build minimal config
+        source_cache_dir = Path(args.output_dir) / "cache" / "sources"
+        cached_sources = load_source_cache(args.query, source_cache_dir)
 
-    competitor_features_file = ""
-    competitor_names: list[str] = []
-    if competitor_features:
+        if cached_sources:
+            _, sources, anchors = cached_sources
+        else:
+            # Minimal fallback — anchors don't matter if threshold is 0
+            sources = ValidatedSources()
+            anchors = [args.query]
+
+        # Check for competitor features file
+        competitor_features_file = ""
         features_path = Path(args.output_dir) / "competitor_features.yaml"
-        save_features_yaml(competitor_features, features_path)
-        competitor_features_file = str(features_path)
-        competitor_names = sorted({f.competitor_name for f in competitor_features})
-        print(f"        Found {len(competitor_names)} competitors: {competitor_names}")
-        print(f"        Total features: {len(competitor_features)}")
-    else:
-        print("        No competitors discovered (pipeline will run without competitor features)")
+        if features_path.exists():
+            competitor_features_file = str(features_path)
 
-    # Check source cache (keyed by query — competitor names don't change per query)
-    source_cache_dir = Path(args.output_dir) / "cache" / "sources"
-    cached_sources = load_source_cache(args.query, source_cache_dir)
+        config = build_config(
+            args.query, sources, anchors,
+            date_start=args.date_start, date_end=args.date_end,
+            output_dir=args.output_dir,
+            competitor_features_file=competitor_features_file,
+        )
+        config.pipeline.run_id = args.run_id
 
-    if cached_sources:
-        print("\n  Using cached discovery results (source map cache hit)")
-        discovery, sources, anchors = cached_sources
-        print(f"        Subreddits: {sources.subreddits}")
-        print(f"        Anchors: {len(anchors)}")
     else:
-        # Step 2: Exa discovery — now enriched with competitor names
-        print("\n  [2/5] Running Exa discovery probes...")
-        discovery = run_exa_discovery(
+        # ── Stage 0: Input Construction ──────────────────────────────
+        print("Stage 0: Discovering sources and building config...")
+        t0 = time.time()
+
+        from latent_signals.stage0_input.exa_discovery import run_exa_discovery
+        from latent_signals.stage0_input.source_extraction import extract_and_validate_sources
+        from latent_signals.stage0_input.anchor_generation import generate_anchors
+        from latent_signals.stage0_input.config_builder import build_config
+        from latent_signals.stage0_input.source_cache import load_source_cache, save_source_cache
+        from latent_signals.stage0_input.competitor_discovery import discover_competitors, save_features_yaml
+
+        # Step 1: Competitor discovery (Exa Answer) — runs FIRST so competitor
+        # names can be used as search terms in the Exa discovery probes.
+        print("\n  [1/5] Discovering competitors and features...")
+        competitor_cache_dir = Path(args.output_dir) / "cache" / "competitors"
+        competitor_features = discover_competitors(
             args.query,
             os.environ["EXA_API_KEY"],
-            date_start=args.date_start,
-            date_end=args.date_end,
-            competitor_names=competitor_names,
+            cache_dir=competitor_cache_dir,
         )
-        print(f"        Found {len(discovery.subreddit_counts)} subreddits, "
-              f"{len(discovery.general_results)} general results, "
-              f"{len(discovery.hn_results)} HN results")
 
-        # Step 3: Source extraction + volume validation
-        date_start = args.date_start
-        date_end = args.date_end
-        if not date_end:
-            from datetime import datetime
-            date_end = datetime.now().strftime("%Y-%m-%d")
-        if not date_start:
-            from datetime import datetime, timedelta
-            end_dt = datetime.strptime(date_end, "%Y-%m-%d")
-            date_start = (end_dt - timedelta(days=365)).strftime("%Y-%m-%d")
+        competitor_features_file = ""
+        competitor_names: list[str] = []
+        if competitor_features:
+            features_path = Path(args.output_dir) / "competitor_features.yaml"
+            save_features_yaml(competitor_features, features_path)
+            competitor_features_file = str(features_path)
+            competitor_names = sorted({f.competitor_name for f in competitor_features})
+            print(f"        Found {len(competitor_names)} competitors: {competitor_names}")
+            print(f"        Total features: {len(competitor_features)}")
+        else:
+            print("        No competitors discovered (pipeline will run without competitor features)")
 
-        print(f"\n  [3/5] Validating source volumes ({date_start} to {date_end})...")
-        sources = extract_and_validate_sources(
-            discovery, args.query, date_start=date_start, date_end=date_end,
+        # Check source cache (keyed by query — competitor names don't change per query)
+        source_cache_dir = Path(args.output_dir) / "cache" / "sources"
+        cached_sources = load_source_cache(args.query, source_cache_dir)
+
+        if cached_sources:
+            print("\n  Using cached discovery results (source map cache hit)")
+            discovery, sources, anchors = cached_sources
+            print(f"        Subreddits: {sources.subreddits}")
+            print(f"        Anchors: {len(anchors)}")
+        else:
+            # Step 2: Exa discovery — now enriched with competitor names
+            print("\n  [2/5] Running Exa discovery probes...")
+            discovery = run_exa_discovery(
+                args.query,
+                os.environ["EXA_API_KEY"],
+                date_start=args.date_start,
+                date_end=args.date_end,
+                competitor_names=competitor_names,
+            )
+            print(f"        Found {len(discovery.subreddit_counts)} subreddits, "
+                  f"{len(discovery.general_results)} general results, "
+                  f"{len(discovery.hn_results)} HN results")
+
+            # Step 3: Source extraction + volume validation
+            date_start = args.date_start
+            date_end = args.date_end
+            if not date_end:
+                from datetime import datetime
+                date_end = datetime.now().strftime("%Y-%m-%d")
+            if not date_start:
+                from datetime import datetime, timedelta
+                end_dt = datetime.strptime(date_end, "%Y-%m-%d")
+                date_start = (end_dt - timedelta(days=365)).strftime("%Y-%m-%d")
+
+            print(f"\n  [3/5] Validating source volumes ({date_start} to {date_end})...")
+            sources = extract_and_validate_sources(
+                discovery, args.query, date_start=date_start, date_end=date_end,
+            )
+            print(f"        Accepted: {sources.subreddits}")
+            if sources.dropped_subreddits:
+                print(f"        Dropped (low volume): {sources.dropped_subreddits}")
+            if sources.hn_has_signal:
+                print(f"        HN queries: {sources.hn_queries}")
+
+            # Step 4: Anchor generation
+            print(f"\n  [4/5] Generating market anchors...")
+            anchors = generate_anchors(args.query, discovery)
+            print(f"        Anchors ({len(anchors)}):")
+            for a in anchors:
+                print(f"          - \"{a}\"")
+
+            # Cache discovery results for repeat queries
+            save_source_cache(args.query, discovery, sources, anchors, source_cache_dir)
+
+        # Step 5: Build config
+        print(f"\n  [5/5] Building pipeline config...")
+        config = build_config(
+            args.query, sources, anchors,
+            date_start=args.date_start, date_end=args.date_end,
+            output_dir=args.output_dir,
+            competitor_features_file=competitor_features_file,
         )
-        print(f"        Accepted: {sources.subreddits}")
-        if sources.dropped_subreddits:
-            print(f"        Dropped (low volume): {sources.dropped_subreddits}")
-        if sources.hn_has_signal:
-            print(f"        HN queries: {sources.hn_queries}")
 
-        # Step 4: Anchor generation
-        print(f"\n  [4/5] Generating market anchors...")
-        anchors = generate_anchors(args.query, discovery)
-        print(f"        Anchors ({len(anchors)}):")
-        for a in anchors:
-            print(f"          - \"{a}\"")
+        stage0_duration = time.time() - t0
+        print(f"\n  Stage 0 complete ({stage0_duration:.1f}s)")
 
-        # Cache discovery results for repeat queries
-        save_source_cache(args.query, discovery, sources, anchors, source_cache_dir)
+        # Save discovery results for inspection
+        discovery_out = Path(args.output_dir) / "stage0_discovery.json"
+        discovery_out.parent.mkdir(parents=True, exist_ok=True)
+        with open(discovery_out, "w") as f:
+            json.dump({
+                "query": args.query,
+                "subreddits": sources.subreddits,
+                "subreddit_volumes": sources.subreddit_volumes,
+                "dropped_subreddits": sources.dropped_subreddits,
+                "hn_queries": sources.hn_queries,
+                "anchors": anchors,
+                "competitors": [
+                    {"name": name, "n_features": len(feats)}
+                    for name, feats in _group_features(competitor_features).items()
+                ],
+                "competitor_features_file": competitor_features_file,
+                "domain_counts": dict(discovery.domain_counts.most_common(30)),
+                "subreddit_counts": dict(discovery.subreddit_counts.most_common(30)),
+            }, f, indent=2)
+        print(f"  Discovery results saved to {discovery_out}")
 
-    # Step 5: Build config
-    print(f"\n  [5/5] Building pipeline config...")
-    config = build_config(
-        args.query, sources, anchors,
-        date_start=args.date_start, date_end=args.date_end,
-        output_dir=args.output_dir,
-        competitor_features_file=competitor_features_file,
-    )
-
-    stage0_duration = time.time() - t0
-    print(f"\n  Stage 0 complete ({stage0_duration:.1f}s)")
-
-    # Save discovery results for inspection
-    discovery_out = Path(args.output_dir) / "stage0_discovery.json"
-    discovery_out.parent.mkdir(parents=True, exist_ok=True)
-    with open(discovery_out, "w") as f:
-        json.dump({
-            "query": args.query,
-            "subreddits": sources.subreddits,
-            "subreddit_volumes": sources.subreddit_volumes,
-            "dropped_subreddits": sources.dropped_subreddits,
-            "hn_queries": sources.hn_queries,
-            "anchors": anchors,
-            "competitors": [
-                {"name": name, "n_features": len(feats)}
-                for name, feats in _group_features(competitor_features).items()
-            ],
-            "competitor_features_file": competitor_features_file,
-            "domain_counts": dict(discovery.domain_counts.most_common(30)),
-            "subreddit_counts": dict(discovery.subreddit_counts.most_common(30)),
-        }, f, indent=2)
-    print(f"  Discovery results saved to {discovery_out}")
-
-    if args.discovery_only:
-        print("\n--discovery-only: skipping pipeline stages 1-6.")
-        _print_config_summary(config)
-        return
+        if args.discovery_only:
+            print("\n--discovery-only: skipping pipeline stages 1-6.")
+            _print_config_summary(config)
+            return
 
     # ── Stages 1-6: Run pipeline ─────────────────────────────────
     print(f"\n{'=' * 60}")
