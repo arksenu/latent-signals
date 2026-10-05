@@ -1,0 +1,33 @@
+name: Documentation impact
+on:
+  pull_request:
+    paths:
+      - README.md
+      - index.md
+      - product_brief.md
+      - project-overview.md
+      - latent-signals/01_strategy/product_brief.md
+      - latent-signals/02_requirements/scoring_function_spec.md
+      - latent-signals/02_requirements/user_flows.md
+      - latent-signals/05_validation/results/backtest_summary.md
+      - .doc-lattice.yml
+      - .docprop.toml
+      - .github/workflows/docprop.yml
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: docprop-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: arksenu/docprop@aa4ccd7e243a072a9d4aae1fc2a2f03a44fb4978
+        with:
+          fail-on-findings: 'false'

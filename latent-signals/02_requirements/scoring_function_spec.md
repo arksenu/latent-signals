@@ -1,3 +1,6 @@
+<!-- doc-lattice
+id: scoring-spec
+-->
 # Scoring Function Spec
 
 **Status:** Active — documents current engine scoring

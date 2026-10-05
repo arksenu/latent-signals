@@ -1,3 +1,11 @@
+<!-- doc-lattice
+id: project-overview
+derives_from:
+  - ref: backtest-summary#final-results
+    seen: 65f80d50eddf413b862d312f8eb17866
+  - ref: backtest-summary#known-limitation-opportunity-magnitude
+    seen: 4bb975e278e60a177674875596b83722
+-->
 # Latent Signals — Project Overview
 
 **Type:** Data Pipeline (NLP/Competitive Intelligence)

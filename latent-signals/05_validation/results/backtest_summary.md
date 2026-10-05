@@ -1,3 +1,6 @@
+<!-- doc-lattice
+id: backtest-summary
+-->
 # Backtest Summary
 
 **Date**: 2026-02-23 (round 1), 2026-02-25 (round 2), 2026-02-26 (VS Code control + final assessment)
