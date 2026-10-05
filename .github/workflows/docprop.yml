@@ -28,6 +28,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: arksenu/docprop@aa4ccd7e243a072a9d4aae1fc2a2f03a44fb4978
+      - uses: arksenu/docprop@722d9e36a75fd6f2f79d736d0ef92797c6867708
         with:
           fail-on-findings: 'false'
