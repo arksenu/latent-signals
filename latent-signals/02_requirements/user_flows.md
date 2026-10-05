@@ -1,3 +1,11 @@
+<!-- doc-lattice
+id: user-flows
+derives_from:
+  - ref: product-brief#two-jobs-to-be-done
+    seen: 36c86e2829c1ea40e94facb3e5b6a9b3
+  - ref: product-brief#v1-scope
+    seen: ac9c2d7e924f641ac0db4e4c0f256909
+-->
 # User Flows
 
 **Status:** Active — engine workflow documented, user-facing input layer not yet built

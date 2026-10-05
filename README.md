@@ -1,3 +1,13 @@
+<!-- doc-lattice
+id: readme
+derives_from:
+  - ref: backtest-summary#final-results
+    seen: 65f80d50eddf413b862d312f8eb17866
+  - ref: scoring-spec#formula
+    seen: 9d903526e3610ee57e114054880b0db9
+  - ref: scoring-spec#component-definitions
+    seen: 1f2eaccf884bab14e44923680f49e09b
+-->
 # Latent Signals
 
 A competitive intelligence tool that detects underserved market opportunities by analyzing community sentiment from Reddit and Hacker News, mapping signals against competitor feature coverage, and scoring gaps with a composite metric. Give it a description of your market — it returns a ranked, evidence-backed report of where demand exists but supply doesn't.

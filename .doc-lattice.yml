@@ -1,0 +1,11 @@
+# doc-lattice: which docs restate content from which (see each file's <!-- doc-lattice --> header).
+# Check with docprop:  python docprop.py check --repo .
+lattice_format: 2
+docs_roots:
+  - README.md
+  - index.md
+  - latent-signals/02_requirements/scoring_function_spec.md
+  - latent-signals/02_requirements/user_flows.md
+  - latent-signals/05_validation/results/backtest_summary.md
+  - product_brief.md
+  - project-overview.md

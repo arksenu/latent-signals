@@ -1,0 +1,4 @@
+# docprop: exact copies. `docprop.py check` reports drift; `docprop.py sync COPY` re-copies.
+[[mirror]]
+canonical = "product_brief.md"
+copy = "latent-signals/01_strategy/product_brief.md"

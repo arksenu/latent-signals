@@ -1,3 +1,9 @@
+<!-- doc-lattice
+id: docs-index
+derives_from:
+  - ref: backtest-summary#final-results
+    seen: 65f80d50eddf413b862d312f8eb17866
+-->
 # Latent Signals — Project Documentation Index
 
 > Generated: 2026-02-23 | Updated: 2026-02-27 | Scan Level: Exhaustive
